@@ -1,23 +1,29 @@
 import * as Minio from 'minio'
 import { config } from '../lib/config'
 
-const endpoint = new URL(config.STORAGE_ENDPOINT)
-const useSSL = endpoint.protocol === 'https:'
+function buildClient(endpointURL: string) {
+  const endpoint = new URL(endpointURL)
+  const useSSL = endpoint.protocol === 'https:'
+  return new Minio.Client({
+    endPoint: endpoint.hostname,
+    port: endpoint.port ? Number(endpoint.port) : useSSL ? 443 : 80,
+    useSSL,
+    accessKey: config.STORAGE_ACCESS_KEY,
+    secretKey: config.STORAGE_SECRET_KEY,
+    region: config.STORAGE_REGION,
+  })
+}
 
-const client = new Minio.Client({
-  endPoint: endpoint.hostname,
-  port: endpoint.port ? Number(endpoint.port) : useSSL ? 443 : 80,
-  useSSL,
-  accessKey: config.STORAGE_ACCESS_KEY,
-  secretKey: config.STORAGE_SECRET_KEY,
-  region: config.STORAGE_REGION,
-})
+const client = buildClient(config.STORAGE_ENDPOINT)
+const presignClient = config.STORAGE_PUBLIC_ENDPOINT
+  ? buildClient(config.STORAGE_PUBLIC_ENDPOINT)
+  : client
 
 export async function presignPut(
   key: string,
   contentType: string
 ): Promise<string> {
-  return client.presignedPutObject(config.STORAGE_BUCKET, key, 15 * 60)
+  return presignClient.presignedPutObject(config.STORAGE_BUCKET, key, 15 * 60)
 }
 
 export async function getObjectBytes(key: string): Promise<Buffer> {

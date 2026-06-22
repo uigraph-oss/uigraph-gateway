@@ -5,6 +5,7 @@ const envSchema = z.object({
   // Base URL of the Go backend, e.g. http://localhost:8081 (no trailing slash)
   UIGRAPH_API_URL: z.string().url(),
   STORAGE_ENDPOINT: z.string().url(),
+  STORAGE_PUBLIC_ENDPOINT: z.string().url().optional().or(z.literal('')),
   STORAGE_BUCKET: z.string().min(1),
   STORAGE_ACCESS_KEY: z.string().min(1),
   STORAGE_SECRET_KEY: z.string().min(1),

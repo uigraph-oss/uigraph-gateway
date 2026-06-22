@@ -207,7 +207,7 @@ export class UigraphApi {
     return res.frames ?? []
   }
 
-  async syncFrame(mapId: string, body: Json): Promise<{ id: string }> {
+  async syncFrame(mapId: string, body: Json): Promise<{ frameId: string }> {
     return this.request('POST', await this.orgPath(`/maps/${mapId}/frames/sync`), body)
   }
 
@@ -253,6 +253,38 @@ export class UigraphApi {
       'POST',
       await this.orgPath(
         `/maps/${mapId}/frames/${frameId}/focal-points/${fpId}/meta`
+      ),
+      body
+    )
+  }
+
+  async listMeta(
+    mapId: string,
+    frameId: string,
+    fpId: string
+  ): Promise<Array<{ id: string; componentId: string }>> {
+    const res = await this.request<{
+      meta?: Array<{ id: string; componentId: string }>
+    }>(
+      'GET',
+      await this.orgPath(
+        `/maps/${mapId}/frames/${frameId}/focal-points/${fpId}/meta`
+      )
+    )
+    return res.meta ?? []
+  }
+
+  async updateMeta(
+    mapId: string,
+    frameId: string,
+    fpId: string,
+    metaId: string,
+    body: Json
+  ): Promise<unknown> {
+    return this.request(
+      'PUT',
+      await this.orgPath(
+        `/maps/${mapId}/frames/${frameId}/focal-points/${fpId}/meta/${metaId}`
       ),
       body
     )

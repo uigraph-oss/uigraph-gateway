@@ -61,13 +61,17 @@ mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (
   const api = c.get('api')
   const mapId = await resolveMap(api, body.mapName)
 
-  // Upsert the frame metadata.
+  // Upsert the frame by name so re-syncs update in place instead of duplicating.
+  const existingFrameId = (await api.listFrames(mapId)).find(
+    (f) => f.name === body.frameName
+  )?.id
   const frame = await api.syncFrame(mapId, {
+    frameId: existingFrameId,
     name: body.frameName,
     description: body.description ?? '',
     templateType: 'blank',
   })
-  const pageId = frame.id
+  const pageId = frame.frameId ?? existingFrameId
 
   // No image → metadata-only.
   if (!body.imagePath || !body.contentHash) {
@@ -94,13 +98,17 @@ mapRoutes.post('/frame/complete', zValidator('json', frameCompleteSchema), async
   const api = c.get('api')
   const mapId = await resolveMap(api, body.mapName)
 
+  const existingFrameId = (await api.listFrames(mapId)).find(
+    (f) => f.name === body.frameName
+  )?.id
   const frame = await api.syncFrame(mapId, {
+    frameId: existingFrameId,
     name: body.frameName,
     description: body.description ?? '',
     templateType: 'blank',
     screenshot: body.fileId,
   })
-  return c.json({ pageId: frame.id, message: 'frame synced' })
+  return c.json({ pageId: frame.frameId ?? existingFrameId, message: 'frame synced' })
 })
 
 // ── Focal point upsert ────────────────────────────────────────────────────────────
@@ -152,6 +160,7 @@ const metaSchema = z.object({
   componentModalFields: z.array(z.unknown()).optional(),
   serviceName: z.string().optional(),
   architectureDiagramName: z.string().optional(),
+  testPackName: z.string().optional(),
 })
 
 mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) => {
@@ -177,6 +186,31 @@ mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) =>
       )
       if (diagram?.diagram?.id) payload.componentFlowDiagram = diagram.diagram.id
     }
+  }
+
+  // Test-case-suite link resolved by test pack name within the service.
+  if (body.testPackName && body.serviceName && !body.componentLinkId) {
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (serviceId) {
+      const pack = (await api.listTestPacks(serviceId)).find(
+        (t) => t.name === body.testPackName
+      )
+      if (pack?.testPackId) payload.componentLinkId = pack.testPackId
+    }
+  }
+
+  // Upsert the component link so re-syncs update in place instead of duplicating.
+  const existingMeta = (await api.listMeta(mapId, frameId, fp.id)).find(
+    (m) => m.componentId === body.componentId
+  )
+  if (existingMeta) {
+    await api.updateMeta(mapId, frameId, fp.id, existingMeta.id, payload)
+    return c.json({
+      focalPointMetaId: existingMeta.id,
+      focalPointId: fp.id,
+      componentId: body.componentId,
+      message: 'meta synced',
+    })
   }
 
   const res = (await api.createMeta(mapId, frameId, fp.id, payload)) as {
