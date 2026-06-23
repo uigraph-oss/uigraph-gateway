@@ -1,4 +1,9 @@
-import { convertNoSQLToAst, SqlToAstParser } from '@uigraph/sdk'
+import {
+  convertNoSQLToAst,
+  SqlToAstParser,
+  type ColumnAST,
+  type SchemaAST,
+} from '@uigraph/sdk'
 import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import { z } from 'zod'
@@ -114,6 +119,26 @@ const dbSchema = z.object({
   schemaFileContent: z.string().min(1),
 })
 
+function stringifyDefaultValue(column: ColumnAST): string | null {
+  if (!column.defaultValue) return null
+  if (column.defaultValue.raw != null) return column.defaultValue.raw
+  if (column.defaultValue.value === null) return 'NULL'
+  return String(column.defaultValue.value)
+}
+
+function normalizeDefaultValues(ast: SchemaAST): unknown {
+  return {
+    ...ast,
+    tables: ast.tables.map((table) => ({
+      ...table,
+      columns: table.columns.map((column) => ({
+        ...column,
+        defaultValue: stringifyDefaultValue(column),
+      })),
+    })),
+  }
+}
+
 function parseSchema(dialect: string, content: string): unknown {
   if (dialect === 'dynamodb' || dialect === 'mongodb') {
     let parsed: unknown
@@ -127,7 +152,8 @@ function parseSchema(dialect: string, content: string): unknown {
   const sqlDialect = (sqlDialectMap[dialect] ?? 'mysql') as ConstructorParameters<
     typeof SqlToAstParser
   >[0]
-  return new SqlToAstParser(sqlDialect).parse(content)
+  const ast = new SqlToAstParser(sqlDialect).parse(content)
+  return normalizeDefaultValues(ast)
 }
 
 serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) => {
