@@ -45,9 +45,31 @@ diagramRoutes.post(
         throw new ApiError(400, 'contextContent is not valid JSON')
       }
       const context = contextSchema.parse(parsed)
+
+      const serviceIdByName = new Map<string, string | null>()
+      const dbsByServiceId = new Map<string, Array<{ id: string; dbName: string }>>()
+
       reactFlow = await convertMermaidToReactFlowWithContext(
         body.mermaidContent,
-        context
+        context,
+        {
+          resolveDbConfig: async (service, database) => {
+            if (!serviceIdByName.has(service)) {
+              serviceIdByName.set(service, await api.findServiceByName(service))
+            }
+            const dbServiceId = serviceIdByName.get(service)
+            if (!dbServiceId) return undefined
+
+            if (!dbsByServiceId.has(dbServiceId)) {
+              dbsByServiceId.set(dbServiceId, await api.listDBs(dbServiceId))
+            }
+            const db = dbsByServiceId
+              .get(dbServiceId)
+              ?.find((d) => d.dbName === database)
+
+            return { serviceId: dbServiceId, serviceDbId: db?.id }
+          },
+        }
       )
     } else {
       reactFlow = await convertMermaidToReactFlow(body.mermaidContent)
