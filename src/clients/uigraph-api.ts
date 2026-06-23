@@ -106,12 +106,21 @@ export class UigraphApi {
     return this.request('POST', await this.orgPath('/diagrams/sync'), body)
   }
 
+  async createDiagram(body: Json): Promise<{ id: string }> {
+    return this.request('POST', await this.orgPath('/diagrams'), body)
+  }
+
+  async updateDiagram(diagramId: string, body: Json): Promise<unknown> {
+    return this.request('PUT', await this.orgPath(`/diagrams/${diagramId}`), body)
+  }
+
   // ── Service databases ──────────────────────────────────────────────────────
-  async listDBs(serviceId: string): Promise<Array<{ id: string; dbName: string }>> {
-    const res = await this.request<{ dbs?: Array<{ id: string; dbName: string }> }>(
-      'GET',
-      await this.orgPath(`/services/${serviceId}/dbs`)
-    )
+  async listDBs(
+    serviceId: string
+  ): Promise<Array<{ id: string; dbName: string; schemaJson?: unknown }>> {
+    const res = await this.request<{
+      dbs?: Array<{ id: string; dbName: string; schemaJson?: unknown }>
+    }>('GET', await this.orgPath(`/services/${serviceId}/dbs`))
     return res.dbs ?? []
   }
 

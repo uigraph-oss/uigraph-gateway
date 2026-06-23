@@ -1,8 +1,11 @@
 import {
+  AstToUiConverter,
   convertNoSQLToAst,
+  generateUUID,
   SqlToAstParser,
   type ColumnAST,
   type SchemaAST,
+  type SchemaDialect,
 } from '@uigraph/sdk'
 import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
@@ -139,21 +142,47 @@ function normalizeDefaultValues(ast: SchemaAST): unknown {
   }
 }
 
-function parseSchema(dialect: string, content: string): unknown {
-  if (dialect === 'dynamodb' || dialect === 'mongodb') {
-    let parsed: unknown
-    try {
-      parsed = JSON.parse(content)
-    } catch {
-      throw new ApiError(400, 'schemaFileContent is not valid JSON')
-    }
-    return convertNoSQLToAst(parsed)
+function parseNoSQLSchema(content: string): unknown {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    throw new ApiError(400, 'schemaFileContent is not valid JSON')
   }
-  const sqlDialect = (sqlDialectMap[dialect] ?? 'mysql') as ConstructorParameters<
-    typeof SqlToAstParser
-  >[0]
-  const ast = new SqlToAstParser(sqlDialect).parse(content)
-  return normalizeDefaultValues(ast)
+  return convertNoSQLToAst(parsed)
+}
+
+function buildDataModelDiagramContent(
+  ast: SchemaAST,
+  dataSourceId: string,
+  dbName: string,
+  dialect: SchemaDialect
+): string {
+  const { nodes, edges } = AstToUiConverter.toReactFlow(ast, dataSourceId)
+  const dataSource = {
+    id: dataSourceId,
+    name: dbName,
+    dialect,
+    schemaAst: ast,
+    sourceType: 'file',
+    createdAt: Date.now(),
+    modifiedAt: null,
+  }
+  return JSON.stringify({ nodes, edges, dataSources: [dataSource] })
+}
+
+function extractDbDiagramId(schemaJson: unknown): string | undefined {
+  let parsed: unknown = schemaJson
+  if (typeof schemaJson === 'string') {
+    try {
+      parsed = JSON.parse(schemaJson)
+    } catch {
+      return undefined
+    }
+  }
+  if (typeof parsed !== 'object' || parsed === null) return undefined
+  const id = (parsed as { dbDiagramId?: unknown }).dbDiagramId
+  return typeof id === 'string' ? id : undefined
 }
 
 serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) => {
@@ -168,11 +197,50 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
     )
   }
 
-  const schemaJson = parseSchema(body.dialect, body.schemaFileContent)
-
   const existing = (await api.listDBs(serviceId)).find(
     (d) => d.dbName === body.dbName
   )
+
+  let schemaJson: unknown
+  if (body.dialect === 'dynamodb' || body.dialect === 'mongodb') {
+    schemaJson = parseNoSQLSchema(body.schemaFileContent)
+  } else {
+    const sqlDialect = (sqlDialectMap[body.dialect] ?? 'mysql') as SchemaDialect
+    const ast = new SqlToAstParser(sqlDialect).parse(body.schemaFileContent)
+
+    const dataSourceId = generateUUID()
+    const diagramContent = buildDataModelDiagramContent(
+      ast,
+      dataSourceId,
+      body.dbName,
+      sqlDialect
+    )
+
+    const existingDiagramId = extractDbDiagramId(existing?.schemaJson)
+    let dbDiagramId: string | undefined
+    if (existingDiagramId) {
+      try {
+        await api.updateDiagram(existingDiagramId, {
+          content: diagramContent,
+          source: 'ci',
+        })
+        dbDiagramId = existingDiagramId
+      } catch (error) {
+        if (!(error instanceof ApiError && error.statusCode === 404)) throw error
+        dbDiagramId = undefined
+      }
+    }
+    if (!dbDiagramId) {
+      const created = await api.createDiagram({
+        name: `${body.dbName} Schema Diagram`,
+        content: diagramContent,
+        source: 'ci',
+      })
+      dbDiagramId = created.id
+    }
+
+    schemaJson = { ...(normalizeDefaultValues(ast) as object), dbDiagramId }
+  }
 
   let versionCreated = true
   if (existing?.id) {
