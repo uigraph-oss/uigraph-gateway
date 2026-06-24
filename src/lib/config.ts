@@ -10,6 +10,10 @@ const envSchema = z.object({
   STORAGE_ACCESS_KEY: z.string().min(1),
   STORAGE_SECRET_KEY: z.string().min(1),
   STORAGE_REGION: z.string().default('us-east-1'),
+  STORAGE_FORCE_PATH_STYLE: z
+    .string()
+    .optional()
+    .transform((v) => v !== 'false'),
 })
 
 export type Config = z.infer<typeof envSchema>

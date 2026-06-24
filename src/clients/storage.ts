@@ -11,6 +11,7 @@ function buildClient(endpointURL: string) {
     accessKey: config.STORAGE_ACCESS_KEY,
     secretKey: config.STORAGE_SECRET_KEY,
     region: config.STORAGE_REGION,
+    pathStyle: config.STORAGE_FORCE_PATH_STYLE,
   })
 }
 
