@@ -14,6 +14,9 @@ const contentTypeByFileType: Record<string, string> = {
   markdown: 'text/markdown',
   doc: 'application/msword',
   txt: 'text/plain',
+  image: 'image/png',
+  video: 'video/mp4',
+  audio: 'audio/mpeg',
 }
 
 async function resolveService(
