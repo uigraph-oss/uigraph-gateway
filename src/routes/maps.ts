@@ -5,7 +5,6 @@ import { z } from 'zod'
 import type { AppEnv } from '../app'
 import { presignPut } from '../clients/storage'
 import { ApiError } from '../lib/errors'
-import { componentLinkSchemas } from '../schemas/component-link'
 import type { UigraphApi } from '../clients/uigraph-api'
 
 export const mapRoutes = new Hono<AppEnv>()
@@ -26,7 +25,6 @@ async function resolveFrame(
   return f.id
 }
 
-// ── Map upsert ──────────────────────────────────────────────────────────────────
 const mapSchema = z.object({
   mapName: z.string().min(1),
   description: z.string().optional(),
@@ -47,7 +45,6 @@ mapRoutes.post('/map', zValidator('json', mapSchema), async (c) => {
   return c.json({ mapId: created.id, message: 'map created' })
 })
 
-// ── Frame prepare ─────────────────────────────────────────────────────────────────
 const framePrepareSchema = z.object({
   mapName: z.string().min(1),
   frameName: z.string().min(1),
@@ -62,7 +59,6 @@ mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (
   const api = c.get('api')
   const mapId = await resolveMap(api, body.mapName)
 
-  // Upsert the frame by name so re-syncs update in place instead of duplicating.
   const existingFrameId = (await api.listFrames(mapId)).find(
     (f) => f.name === body.frameName
   )?.id
@@ -74,7 +70,6 @@ mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (
   })
   const pageId = frame.frameId ?? existingFrameId
 
-  // No image → metadata-only.
   if (!body.imagePath || !body.contentHash) {
     return c.json({ action: 'done', pageId })
   }
@@ -85,7 +80,6 @@ mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (
   return c.json({ action: 'upload', pageId, uploadUrl, fileId })
 })
 
-// ── Frame complete ──────────────────────────────────────────────────────────────
 const frameCompleteSchema = z.object({
   mapName: z.string().min(1),
   frameName: z.string().min(1),
@@ -112,7 +106,6 @@ mapRoutes.post('/frame/complete', zValidator('json', frameCompleteSchema), async
   return c.json({ pageId: frame.frameId ?? existingFrameId, message: 'frame synced' })
 })
 
-// ── Focal point upsert ────────────────────────────────────────────────────────────
 const focalSchema = z.object({
   mapName: z.string().min(1),
   frameName: z.string().min(1),
@@ -151,17 +144,19 @@ mapRoutes.post('/focal-point', zValidator('json', focalSchema), async (c) => {
   return c.json({ focalPointId, pageId: frameId, message: 'focal point synced' })
 })
 
-// ── Focal point meta (component link) ───────────────────────────────────────────────
 const metaSchema = z.object({
   mapName: z.string().min(1),
   frameName: z.string().min(1),
   focalPointName: z.string().min(1),
   componentId: z.string().min(1),
-  componentLink: z.unknown().optional(),
   componentModalFields: z.array(z.unknown()).optional(),
   serviceName: z.string().optional(),
   architectureDiagramName: z.string().optional(),
   testPackName: z.string().optional(),
+  componentLinkDiagramId: z.string().optional(),
+  componentLinkApiEndpointId: z.string().optional(),
+  componentLinkTestPackId: z.string().optional(),
+  componentLinkServiceDocId: z.string().optional(),
 })
 
 mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) => {
@@ -177,36 +172,35 @@ mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) =>
   const payload: Record<string, unknown> = { componentId: body.componentId }
   if (body.componentModalFields) payload.componentModalFields = body.componentModalFields
 
-  let componentLink = body.componentLink
+  if (body.componentLinkDiagramId)
+    payload.componentLinkDiagramId = body.componentLinkDiagramId
+  if (body.componentLinkApiEndpointId)
+    payload.componentLinkApiEndpointId = body.componentLinkApiEndpointId
+  if (body.componentLinkTestPackId)
+    payload.componentLinkTestPackId = body.componentLinkTestPackId
+  if (body.componentLinkServiceDocId)
+    payload.componentLinkServiceDocId = body.componentLinkServiceDocId
 
-  // Backend-flow-diagram link resolved by diagram name within the service.
-  if (!componentLink && body.architectureDiagramName && body.serviceName) {
+  if (!payload.componentLinkDiagramId && body.architectureDiagramName && body.serviceName) {
     const serviceId = await api.findServiceByName(body.serviceName)
     if (serviceId) {
       const diagram = (await api.listServiceDiagrams(serviceId)).find(
         (d) => d.diagram?.name === body.architectureDiagramName
       )
-      if (diagram?.diagram?.id) componentLink = { diagramId: diagram.diagram.id }
+      if (diagram?.diagram?.id) payload.componentLinkDiagramId = diagram.diagram.id
     }
   }
 
-  // Test-case-suite link resolved by test pack name within the service.
-  if (!componentLink && body.testPackName && body.serviceName) {
+  if (!payload.componentLinkTestPackId && body.testPackName && body.serviceName) {
     const serviceId = await api.findServiceByName(body.serviceName)
     if (serviceId) {
       const pack = (await api.listTestPacks(serviceId)).find(
         (t) => t.name === body.testPackName
       )
-      if (pack?.testPackId) componentLink = { serviceId, testPackId: pack.testPackId }
+      if (pack?.testPackId) payload.componentLinkTestPackId = pack.testPackId
     }
   }
 
-  if (componentLink) {
-    const schema = componentLinkSchemas[body.componentId]
-    payload.componentLink = schema ? schema.parse(componentLink) : componentLink
-  }
-
-  // Upsert the component link so re-syncs update in place instead of duplicating.
   const existingMeta = (await api.listMeta(mapId, frameId, fp.id)).find(
     (m) => m.componentId === body.componentId
   )
