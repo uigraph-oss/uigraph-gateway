@@ -22,9 +22,10 @@ const serviceSchema = z.object({
     category: z.string().optional(),
     description: z.string().optional(),
     repository: z.object({ provider: z.string(), url: z.string() }).optional(),
-    ownership: z
-      .object({ team: z.string().optional(), email: z.string().optional() })
-      .optional(),
+    ownership: z.object({
+      team: z.string().min(1),
+      email: z.string().optional(),
+    }),
     labels: z.array(z.string()).optional(),
     integrations: z
       .object({
@@ -43,6 +44,7 @@ serviceRoutes.post('/service', zValidator('json', serviceSchema), async (c) => {
     name: service.name,
     description: service.description ?? '',
     category: service.category ?? '',
+    teamName: service.ownership.team,
     gitRepoUrl: service.repository?.url ?? null,
     jiraProjectUrl: service.integrations?.jira?.url ?? null,
     slackChannelUrl: service.integrations?.slack?.url ?? null,
