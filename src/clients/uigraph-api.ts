@@ -156,6 +156,19 @@ export class UigraphApi {
     )
   }
 
+  async listAPIEndpoints(
+    serviceId: string,
+    apiGroupId: string
+  ): Promise<Array<{ id: string; operationId: string }>> {
+    const res = await this.request<{
+      endpoints?: Array<{ id: string; operationId: string }>
+    }>(
+      'GET',
+      await this.orgPath(`/services/${serviceId}/api-groups/${apiGroupId}/endpoints`)
+    )
+    return res.endpoints ?? []
+  }
+
   // ── Tests ────────────────────────────────────────────────────────────────────
   async listTestPacks(serviceId: string): Promise<Array<{ testPackId: string; name: string }>> {
     const res = await this.request<{ testPacks?: Array<{ testPackId: string; name: string }> }>(

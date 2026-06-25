@@ -153,6 +153,9 @@ const metaSchema = z.object({
   serviceName: z.string().optional(),
   architectureDiagramName: z.string().optional(),
   testPackName: z.string().optional(),
+  apiGroupName: z.string().optional(),
+  operationId: z.string().optional(),
+  docName: z.string().optional(),
   componentLinkDiagramId: z.string().optional(),
   componentLinkApiEndpointId: z.string().optional(),
   componentLinkTestPackId: z.string().optional(),
@@ -198,6 +201,36 @@ mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) =>
         (t) => t.name === body.testPackName
       )
       if (pack?.testPackId) payload.componentLinkTestPackId = pack.testPackId
+    }
+  }
+
+  if (
+    !payload.componentLinkApiEndpointId &&
+    body.apiGroupName &&
+    body.operationId &&
+    body.serviceName
+  ) {
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (serviceId) {
+      const group = (await api.listAPIGroups(serviceId)).find(
+        (g) => g.name === body.apiGroupName
+      )
+      if (group) {
+        const endpoint = (await api.listAPIEndpoints(serviceId, group.id)).find(
+          (e) => e.operationId === body.operationId
+        )
+        if (endpoint) payload.componentLinkApiEndpointId = endpoint.id
+      }
+    }
+  }
+
+  if (!payload.componentLinkServiceDocId && body.docName && body.serviceName) {
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (serviceId) {
+      const doc = (await api.listDocs(serviceId)).find(
+        (d) => d.fileName === body.docName
+      )
+      if (doc) payload.componentLinkServiceDocId = doc.id
     }
   }
 
