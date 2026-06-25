@@ -5,6 +5,7 @@ import { z } from 'zod'
 import type { AppEnv } from '../app'
 import { presignPut } from '../clients/storage'
 import { ApiError } from '../lib/errors'
+import { componentLinkSchemas } from '../schemas/component-link'
 import type { UigraphApi } from '../clients/uigraph-api'
 
 export const mapRoutes = new Hono<AppEnv>()
@@ -156,7 +157,7 @@ const metaSchema = z.object({
   frameName: z.string().min(1),
   focalPointName: z.string().min(1),
   componentId: z.string().min(1),
-  componentLinkId: z.string().optional(),
+  componentLink: z.unknown().optional(),
   componentModalFields: z.array(z.unknown()).optional(),
   serviceName: z.string().optional(),
   architectureDiagramName: z.string().optional(),
@@ -174,29 +175,35 @@ mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) =>
   if (!fp) throw new ApiError(404, `focal point "${body.focalPointName}" not found`)
 
   const payload: Record<string, unknown> = { componentId: body.componentId }
-  if (body.componentLinkId) payload.componentLinkId = body.componentLinkId
   if (body.componentModalFields) payload.componentModalFields = body.componentModalFields
 
+  let componentLink = body.componentLink
+
   // Backend-flow-diagram link resolved by diagram name within the service.
-  if (body.architectureDiagramName && body.serviceName && !body.componentLinkId) {
+  if (!componentLink && body.architectureDiagramName && body.serviceName) {
     const serviceId = await api.findServiceByName(body.serviceName)
     if (serviceId) {
       const diagram = (await api.listServiceDiagrams(serviceId)).find(
         (d) => d.diagram?.name === body.architectureDiagramName
       )
-      if (diagram?.diagram?.id) payload.componentFlowDiagram = diagram.diagram.id
+      if (diagram?.diagram?.id) componentLink = { diagramId: diagram.diagram.id }
     }
   }
 
   // Test-case-suite link resolved by test pack name within the service.
-  if (body.testPackName && body.serviceName && !body.componentLinkId) {
+  if (!componentLink && body.testPackName && body.serviceName) {
     const serviceId = await api.findServiceByName(body.serviceName)
     if (serviceId) {
       const pack = (await api.listTestPacks(serviceId)).find(
         (t) => t.name === body.testPackName
       )
-      if (pack?.testPackId) payload.componentLinkId = pack.testPackId
+      if (pack?.testPackId) componentLink = { serviceId, testPackId: pack.testPackId }
     }
+  }
+
+  if (componentLink) {
+    const schema = componentLinkSchemas[body.componentId]
+    payload.componentLink = schema ? schema.parse(componentLink) : componentLink
   }
 
   // Upsert the component link so re-syncs update in place instead of duplicating.
