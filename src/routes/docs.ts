@@ -78,12 +78,22 @@ docsRoutes.post('/service/doc/complete', zValidator('json', completeSchema), asy
   const serviceId = await resolveService(api, body.serviceName)
 
   const bytes = await getObjectBytes(body.fileId)
-  await api.createDoc(serviceId, {
+  const docBody = {
     fileName: body.docName,
     fileType: body.fileType,
     description: body.description,
     contentBase64: bytes.toString('base64'),
-  })
+  }
+
+  const existing = (await api.listDocs(serviceId)).find(
+    (d) => d.fileName === body.docName
+  )
+  if (existing) {
+    await api.updateDoc(existing.id, docBody)
+  }
+  if (!existing) {
+    await api.createDoc(serviceId, docBody)
+  }
 
   return c.json({ name: body.docName, message: 'synced' })
 })

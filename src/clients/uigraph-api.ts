@@ -186,13 +186,26 @@ export class UigraphApi {
     serviceId: string
   ): Promise<Array<{ id: string; fileName: string; contentHash: string }>> {
     const res = await this.request<{
-      docs?: Array<{ id: string; fileName: string; contentHash: string }>
+      docs?: Array<{
+        docId: string
+        doc?: { id: string; fileName: string; contentHash: string }
+      }>
     }>('GET', await this.orgPath(`/services/${serviceId}/docs`))
-    return res.docs ?? []
+    return (res.docs ?? [])
+      .filter((d) => d.doc !== undefined)
+      .map((d) => ({
+        id: d.doc!.id,
+        fileName: d.doc!.fileName,
+        contentHash: d.doc!.contentHash,
+      }))
   }
 
   async createDoc(serviceId: string, body: Json): Promise<unknown> {
     return this.request('POST', await this.orgPath(`/services/${serviceId}/docs`), body)
+  }
+
+  async updateDoc(docId: string, body: Json): Promise<unknown> {
+    return this.request('PUT', await this.orgPath(`/docs/${docId}`), body)
   }
 
   // ── Maps / frames / focal points ───────────────────────────────────────────────
