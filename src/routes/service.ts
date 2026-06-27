@@ -15,7 +15,6 @@ import { ApiError } from '../lib/errors'
 
 export const serviceRoutes = new Hono<AppEnv>()
 
-// ── Service upsert ────────────────────────────────────────────────────────────
 const serviceSchema = z.object({
   service: z.object({
     name: z.string().min(1),
@@ -61,7 +60,6 @@ serviceRoutes.post('/service', zValidator('json', serviceSchema), async (c) => {
   return c.json({ name: service.name })
 })
 
-// ── API group ─────────────────────────────────────────────────────────────────
 const protocolByType: Record<string, string> = {
   openapi: 'REST',
   graphql: 'GraphQL',
@@ -96,7 +94,6 @@ serviceRoutes.post(
     const res = await api.syncAPIGroup(serviceId, {
       apiGroupId: existing?.id,
       name: body.apiGroup.name,
-      version: 'v1',
       protocol: protocolByType[body.apiGroup.type] ?? 'REST',
       spec: body.spec.content,
     })
@@ -109,7 +106,6 @@ serviceRoutes.post(
   }
 )
 
-// ── Database ────────────────────────────────────────────────────────────────────
 const sqlDialectMap: Record<string, string> = {
   postgres: 'postgresql',
   mysql: 'mysql',
