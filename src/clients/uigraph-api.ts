@@ -136,6 +136,21 @@ export class UigraphApi {
     )
   }
 
+  // Idempotent upsert-by-sourceRef, backed by a real Postgres unique constraint
+  // on the uigraph-api side — unlike listDBs/createDB/updateDB above, there is
+  // no list-then-decide step here, so concurrent syncs can't create duplicates.
+  async syncSavedQuery(
+    serviceId: string,
+    dbId: string,
+    body: Json
+  ): Promise<{ id: string; created: boolean }> {
+    return this.request<{ id: string; created: boolean }>(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/dbs/${dbId}/queries/sync`),
+      body
+    )
+  }
+
   // ── API groups ──────────────────────────────────────────────────────────────
   async listAPIGroups(serviceId: string): Promise<Array<{ id: string; name: string }>> {
     const res = await this.request<{ apiGroups?: Array<{ id: string; name: string }> }>(

@@ -261,3 +261,50 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
 
   return c.json({ dbName: body.dbName, versionCreated })
 })
+
+const savedQuerySchema = z.object({
+  serviceName: z.string().min(1),
+  dbName: z.string().min(1),
+  sourceRef: z.string().min(1),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  queryText: z.string().min(1),
+  tags: z.array(z.string()).optional(),
+})
+
+serviceRoutes.post(
+  '/service/database/query',
+  zValidator('json', savedQuerySchema),
+  async (c) => {
+    const body = c.req.valid('json')
+    const api = c.get('api')
+
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (!serviceId) {
+      throw new ApiError(
+        404,
+        `service "${body.serviceName}" not found — sync the service first`
+      )
+    }
+    const db = (await api.listDBs(serviceId)).find((d) => d.dbName === body.dbName)
+    if (!db) {
+      throw new ApiError(
+        404,
+        `database "${body.dbName}" not found — sync the database schema first`
+      )
+    }
+
+    // Unlike the /service/database handler above, the create-vs-update
+    // decision is not made here — it's delegated whole to uigraph-api's
+    // ON CONFLICT upsert, which is race-free under concurrent syncs.
+    const result = await api.syncSavedQuery(serviceId, db.id, {
+      sourceRef: body.sourceRef,
+      title: body.title,
+      description: body.description ?? '',
+      queryText: body.queryText,
+      tags: body.tags ?? [],
+    })
+
+    return c.json({ sourceRef: body.sourceRef, id: result.id, created: result.created })
+  }
+)
