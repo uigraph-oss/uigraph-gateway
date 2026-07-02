@@ -1,0 +1,6 @@
+docs/superpowers/*
+node_modules
+.pnpm-store
+dist
+.env
+*.log
