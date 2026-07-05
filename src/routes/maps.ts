@@ -28,6 +28,7 @@ async function resolveFrame(
 const mapSchema = z.object({
   mapName: z.string().min(1),
   description: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 mapRoutes.post('/map', zValidator('json', mapSchema), async (c) => {
@@ -41,6 +42,7 @@ mapRoutes.post('/map', zValidator('json', mapSchema), async (c) => {
   const created = await api.createMap({
     name: body.mapName,
     description: body.description ?? '',
+    commitHash: body.commitHash ?? null,
   })
   return c.json({ mapId: created.id, message: 'map created' })
 })
@@ -52,6 +54,7 @@ const framePrepareSchema = z.object({
   contentHash: z.string().optional(),
   fileSize: z.number().optional(),
   imagePath: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (c) => {
@@ -67,6 +70,7 @@ mapRoutes.post('/frame/prepare', zValidator('json', framePrepareSchema), async (
     name: body.frameName,
     description: body.description ?? '',
     templateType: 'blank',
+    commitHash: body.commitHash ?? null,
   })
   const pageId = frame.frameId ?? existingFrameId
 
@@ -86,6 +90,7 @@ const frameCompleteSchema = z.object({
   fileId: z.string().min(1),
   contentHash: z.string().min(1),
   description: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 mapRoutes.post('/frame/complete', zValidator('json', frameCompleteSchema), async (c) => {
@@ -102,6 +107,7 @@ mapRoutes.post('/frame/complete', zValidator('json', frameCompleteSchema), async
     description: body.description ?? '',
     templateType: 'blank',
     screenshot: body.fileId,
+    commitHash: body.commitHash ?? null,
   })
   return c.json({ pageId: frame.frameId ?? existingFrameId, message: 'frame synced' })
 })
@@ -113,6 +119,7 @@ const focalSchema = z.object({
   x: z.number(),
   y: z.number(),
   visibility: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 mapRoutes.post('/focal-point', zValidator('json', focalSchema), async (c) => {
@@ -130,6 +137,7 @@ mapRoutes.post('/focal-point', zValidator('json', focalSchema), async (c) => {
     locationY: body.y,
     visibility: body.visibility ?? 'public',
     isActive: true,
+    commitHash: body.commitHash ?? null,
   }
 
   let focalPointId: string
@@ -160,6 +168,7 @@ const metaSchema = z.object({
   componentLinkApiEndpointId: z.string().optional(),
   componentLinkTestPackId: z.string().optional(),
   componentLinkServiceDocId: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) => {
@@ -172,7 +181,10 @@ mapRoutes.post('/focal-point-meta', zValidator('json', metaSchema), async (c) =>
   )
   if (!fp) throw new ApiError(404, `focal point "${body.focalPointName}" not found`)
 
-  const payload: Record<string, unknown> = { componentId: body.componentId }
+  const payload: Record<string, unknown> = {
+    componentId: body.componentId,
+    commitHash: body.commitHash ?? null,
+  }
   if (body.componentModalFields) payload.componentModalFields = body.componentModalFields
 
   if (body.componentLinkDiagramId)

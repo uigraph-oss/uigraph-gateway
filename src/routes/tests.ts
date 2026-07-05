@@ -26,6 +26,7 @@ const packSchema = z.object({
     environment: z.string().optional(),
     releaseLabel: z.string().optional(),
   }),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
 })
 
 testRoutes.post('/service/test-pack', zValidator('json', packSchema), async (c) => {
@@ -47,6 +48,7 @@ testRoutes.post('/service/test-pack', zValidator('json', packSchema), async (c) 
   const created = await api.createTestPack(serviceId, {
     name: body.testPack.name,
     type: body.testPack.type,
+    commitHash: body.git?.commitHash ?? null,
   })
   return c.json({
     testPackId: created.testPackId,
@@ -59,6 +61,7 @@ testRoutes.post('/service/test-pack', zValidator('json', packSchema), async (c) 
 const caseSchema = z.object({
   serviceName: z.string().min(1),
   testPackId: z.string().min(1),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
   testCase: z
     .object({
       type: z.string().min(1),
@@ -134,6 +137,7 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
     testOwner: tc.testOwner,
     isCritical: tc.isCritical ?? false,
     evidenceRequired: tc.requiresEvidence ?? false,
+    commitHash: body.git?.commitHash ?? null,
   }
 
   if (tc.type === 'manual') {

@@ -13,15 +13,15 @@
   "dependencies": {
     "@hono/node-server": "^1.19.14",
     "@hono/zod-validator": "^0.4.3",
-    "@uigraph/sdk": "^1.2.0",
-    "hono": "^4.12.27",
+    "@uigraph/sdk": "^1.1.37",
+    "hono": "^4.12.26",
     "minio": "^8.0.7",
     "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.20.0",
     "nodemon": "^3.1.14",
-    "prettier": "^3.9.4",
+    "prettier": "^3.8.4",
     "prettier-plugin-organize-imports": "^4.3.0",
     "tsx": "^4.22.4",
     "typescript": "^5.9.3",

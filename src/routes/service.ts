@@ -33,10 +33,11 @@ const serviceSchema = z.object({
       })
       .optional(),
   }),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
 })
 
 serviceRoutes.post('/service', zValidator('json', serviceSchema), async (c) => {
-  const { service } = c.req.valid('json')
+  const { service, git } = c.req.valid('json')
   const api = c.get('api')
 
   const body = {
@@ -48,6 +49,7 @@ serviceRoutes.post('/service', zValidator('json', serviceSchema), async (c) => {
     jiraProjectUrl: service.integrations?.jira?.url ?? null,
     slackChannelUrl: service.integrations?.slack?.url ?? null,
     labels: service.labels ?? [],
+    commitHash: git?.commitHash ?? null,
   }
 
   const existingId = await api.findServiceByName(service.name)
@@ -70,6 +72,7 @@ const apiGroupSchema = z.object({
   apiGroup: z.object({ name: z.string().min(1), type: z.string().min(1) }),
   spec: z.object({ content: z.string(), path: z.string().optional() }),
   serviceName: z.string().min(1),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
 })
 
 serviceRoutes.post(
@@ -96,6 +99,7 @@ serviceRoutes.post(
       name: body.apiGroup.name,
       protocol: protocolByType[body.apiGroup.type] ?? 'REST',
       spec: body.spec.content,
+      commitHash: body.git?.commitHash ?? null,
     })
 
     return c.json({
@@ -118,6 +122,7 @@ const dbSchema = z.object({
   dialect: z.string().min(1),
   dbType: z.string().optional(),
   schemaFileContent: z.string().min(1),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
 })
 
 function stringifyDefaultValue(column: ColumnAST): string | null {
@@ -248,6 +253,7 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
       dialect: body.dialect,
       schemaJson,
       source: 'ci',
+      commitHash: body.git?.commitHash ?? null,
     })
   } else {
     await api.createDB(serviceId, {
@@ -256,6 +262,7 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
       dialect: body.dialect,
       schemaJson,
       source: 'ci',
+      commitHash: body.git?.commitHash ?? null,
     })
   }
 
