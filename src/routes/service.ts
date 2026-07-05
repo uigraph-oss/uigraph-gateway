@@ -277,6 +277,7 @@ const savedQuerySchema = z.object({
   description: z.string().optional(),
   queryText: z.string().min(1),
   tags: z.array(z.string()).optional(),
+  git: z.object({ commitHash: z.string().optional() }).optional(),
 })
 
 serviceRoutes.post(
@@ -310,6 +311,7 @@ serviceRoutes.post(
       description: body.description ?? '',
       queryText: body.queryText,
       tags: body.tags ?? [],
+      commitHash: body.git?.commitHash ?? null,
     })
 
     return c.json({ sourceRef: body.sourceRef, id: result.id, created: result.created })

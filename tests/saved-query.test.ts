@@ -52,6 +52,7 @@ describe('saved query sync', () => {
         title: 'Top Customers',
         queryText: 'select 1',
         tags: ['reporting'],
+        git: { commitHash: 'abc123' },
       }),
     })
 
@@ -72,6 +73,7 @@ describe('saved query sync', () => {
       description: '',
       queryText: 'select 1',
       tags: ['reporting'],
+      commitHash: 'abc123',
     })
   })
 
