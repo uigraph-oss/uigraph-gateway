@@ -70,6 +70,7 @@ const completeSchema = z.object({
   contentHash: z.string().min(1),
   fileType: z.string().optional(),
   description: z.string().optional(),
+  commitHash: z.string().optional(),
 })
 
 docsRoutes.post('/service/doc/complete', zValidator('json', completeSchema), async (c) => {
@@ -92,7 +93,7 @@ docsRoutes.post('/service/doc/complete', zValidator('json', completeSchema), asy
     await api.updateDoc(existing.id, docBody)
   }
   if (!existing) {
-    await api.createDoc(serviceId, docBody)
+    await api.createDoc(serviceId, { ...docBody, commitHash: body.commitHash ?? null })
   }
 
   return c.json({ name: body.docName, message: 'synced' })

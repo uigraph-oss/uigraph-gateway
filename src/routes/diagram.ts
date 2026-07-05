@@ -75,6 +75,7 @@ diagramRoutes.post(
         name: body.name,
         content,
         source: 'ci',
+        commitHash: body.gitCommitHash ?? null,
       })
     }
 
