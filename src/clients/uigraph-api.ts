@@ -60,17 +60,21 @@ export class UigraphApi {
   }
 
   // ── Services ──────────────────────────────────────────────────────────────
-  async listServices(): Promise<Array<{ id: string; name: string }>> {
-    const res = await this.request<{ services?: Array<{ id: string; name: string }> }>(
-      'GET',
-      await this.orgPath('/services')
-    )
+  async listServices(): Promise<Array<{ id: string; name: string; teamId?: string }>> {
+    const res = await this.request<{
+      services?: Array<{ id: string; name: string; teamId?: string }>
+    }>('GET', await this.orgPath('/services'))
     return res.services ?? []
   }
 
   async findServiceByName(name: string): Promise<string | null> {
     const svc = (await this.listServices()).find((s) => s.name === name)
     return svc?.id ?? null
+  }
+
+  async findService(name: string): Promise<{ id: string; teamId?: string } | null> {
+    const svc = (await this.listServices()).find((s) => s.name === name)
+    return svc ? { id: svc.id, teamId: svc.teamId } : null
   }
 
   async createService(body: Json): Promise<{ id: string }> {
@@ -201,10 +205,31 @@ export class UigraphApi {
     )
   }
 
+  async listTestCases(
+    serviceId: string,
+    testPackId: string
+  ): Promise<Array<{ testCaseId: string; title: string }>> {
+    const res = await this.request<{
+      testCases?: Array<{ testCaseId: string; title: string }>
+    }>(
+      'GET',
+      await this.orgPath(`/services/${serviceId}/test-cases?testPackId=${testPackId}`)
+    )
+    return res.testCases ?? []
+  }
+
   async createTestCase(serviceId: string, body: Json): Promise<unknown> {
     return this.request(
       'POST',
       await this.orgPath(`/services/${serviceId}/test-case`),
+      body
+    )
+  }
+
+  async updateTestCase(serviceId: string, testCaseId: string, body: Json): Promise<unknown> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/test-case/${testCaseId}`),
       body
     )
   }
