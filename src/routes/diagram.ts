@@ -26,13 +26,14 @@ diagramRoutes.post(
     const body = c.req.valid('json')
     const api = c.get('api')
 
-    const serviceId = await api.findServiceByName(body.serviceName)
-    if (!serviceId) {
+    const service = await api.findService(body.serviceName)
+    if (!service) {
       throw new ApiError(
         404,
         `service "${body.serviceName}" not found — sync the service first`
       )
     }
+    const serviceId = service.id
 
     // Mermaid (+ optional context) → ReactFlow. componentId on context nodes
     // is threaded onto node.data.componentId by the SDK, so components render.
@@ -68,6 +69,7 @@ diagramRoutes.post(
         name: body.name,
         content,
         source: 'ci',
+        teamId: service.teamId,
       })
       versionCreated = res.versionCreated
     } else {
@@ -75,6 +77,7 @@ diagramRoutes.post(
         name: body.name,
         content,
         source: 'ci',
+        teamId: service.teamId,
       })
     }
 

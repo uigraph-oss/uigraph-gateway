@@ -187,13 +187,14 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
   const body = c.req.valid('json')
   const api = c.get('api')
 
-  const serviceId = await api.findServiceByName(body.serviceName)
-  if (!serviceId) {
+  const service = await api.findService(body.serviceName)
+  if (!service) {
     throw new ApiError(
       404,
       `service "${body.serviceName}" not found — sync the service first`
     )
   }
+  const serviceId = service.id
 
   const existing = (await api.listDBs(serviceId)).find(
     (d) => d.dbName === body.dbName
@@ -221,6 +222,7 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
         await api.updateDiagram(existingDiagramId, {
           content: diagramContent,
           source: 'ci',
+          teamId: service.teamId,
         })
         dbDiagramId = existingDiagramId
       } catch (error) {
@@ -233,6 +235,7 @@ serviceRoutes.post('/service/database', zValidator('json', dbSchema), async (c) 
         name: `${body.dbName} Schema Diagram`,
         content: diagramContent,
         source: 'ci',
+        teamId: service.teamId,
       })
       dbDiagramId = created.id
     }

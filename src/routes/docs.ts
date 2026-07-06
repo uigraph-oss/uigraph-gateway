@@ -22,12 +22,12 @@ const contentTypeByFileType: Record<string, string> = {
 async function resolveService(
   api: AppEnv['Variables']['api'],
   serviceName: string
-): Promise<string> {
-  const id = await api.findServiceByName(serviceName)
-  if (!id) {
+): Promise<{ id: string; teamId?: string }> {
+  const service = await api.findService(serviceName)
+  if (!service) {
     throw new ApiError(404, `service "${serviceName}" not found — sync the service first`)
   }
-  return id
+  return service
 }
 
 // prepare: decide upload vs skip, return a presigned PUT URL for the CLI.
@@ -44,7 +44,7 @@ const prepareSchema = z.object({
 docsRoutes.post('/service/doc/prepare', zValidator('json', prepareSchema), async (c) => {
   const body = c.req.valid('json')
   const api = c.get('api')
-  const serviceId = await resolveService(api, body.serviceName)
+  const { id: serviceId } = await resolveService(api, body.serviceName)
 
   const existing = (await api.listDocs(serviceId)).find(
     (d) => d.fileName === body.docName
@@ -75,7 +75,7 @@ const completeSchema = z.object({
 docsRoutes.post('/service/doc/complete', zValidator('json', completeSchema), async (c) => {
   const body = c.req.valid('json')
   const api = c.get('api')
-  const serviceId = await resolveService(api, body.serviceName)
+  const { id: serviceId, teamId } = await resolveService(api, body.serviceName)
 
   const bytes = await getObjectBytes(body.fileId)
   const docBody = {
@@ -83,6 +83,7 @@ docsRoutes.post('/service/doc/complete', zValidator('json', completeSchema), asy
     fileType: body.fileType,
     description: body.description,
     contentBase64: bytes.toString('base64'),
+    teamId,
   }
 
   const existing = (await api.listDocs(serviceId)).find(
