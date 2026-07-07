@@ -97,14 +97,14 @@ const caseSchema = z.object({
     .passthrough(),
 })
 
-async function resolveHttpMethod(
+async function resolveEndpointLink(
   api: AppEnv['Variables']['api'],
   serviceId: string,
   apiGroupName: string | undefined,
   operationId: string | undefined
-): Promise<string> {
+): Promise<{ httpMethod: string; apiSpecId: string | undefined }> {
   if (!operationId) {
-    return 'GET'
+    return { httpMethod: 'GET', apiSpecId: undefined }
   }
   const groups = await api.listAPIGroups(serviceId)
   const candidates = apiGroupName ? groups.filter((g) => g.name === apiGroupName) : groups
@@ -112,10 +112,16 @@ async function resolveHttpMethod(
     const endpoints = await api.listAPIEndpoints(serviceId, group.id)
     const match = endpoints.find((e) => e.operationId === operationId)
     if (match && match.method) {
-      return match.method.toUpperCase()
+      return {
+        httpMethod: match.method.toUpperCase(),
+        apiSpecId: `${serviceId}:${group.id}`,
+      }
     }
   }
-  return 'GET'
+  throw new ApiError(
+    404,
+    `operation "${operationId}"${apiGroupName ? ` in API group "${apiGroupName}"` : ''} not found — sync the API group first`
+  )
 }
 
 testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) => {
@@ -152,8 +158,10 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
       postconditions: tc.postconditions,
     }
   } else if (tc.type === 'api') {
+    const link = await resolveEndpointLink(api, serviceId, tc.apiGroupName, tc.operationId)
     payload.api = {
-      httpMethod: await resolveHttpMethod(api, serviceId, tc.apiGroupName, tc.operationId),
+      httpMethod: link.httpMethod,
+      apiSpecId: link.apiSpecId,
       operationId: tc.operationId,
       requestBody: tc.requestTemplate,
       expectedStatusCode: tc.expectedStatusCode,
