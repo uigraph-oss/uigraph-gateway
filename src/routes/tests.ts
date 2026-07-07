@@ -163,6 +163,14 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
     }
   }
 
-  await api.createTestCase(serviceId, payload)
+  const existing = (await api.listTestCases(serviceId, body.testPackId)).find(
+    (t) => t.title === tc.title
+  )
+  if (existing) {
+    await api.updateTestCase(serviceId, existing.testCaseId, payload)
+  }
+  if (!existing) {
+    await api.createTestCase(serviceId, payload)
+  }
   return c.json({ title: tc.title })
 })

@@ -201,10 +201,32 @@ export class UigraphApi {
     )
   }
 
+  async listTestCases(
+    serviceId: string,
+    testPackId?: string
+  ): Promise<Array<{ testCaseId: string; title: string }>> {
+    let path = await this.orgPath(`/services/${serviceId}/test-cases`)
+    if (testPackId) {
+      path += `?testPackId=${encodeURIComponent(testPackId)}`
+    }
+    const res = await this.request<{
+      testCases?: Array<{ testCaseId: string; title: string }>
+    }>('GET', path)
+    return res.testCases ?? []
+  }
+
   async createTestCase(serviceId: string, body: Json): Promise<unknown> {
     return this.request(
       'POST',
       await this.orgPath(`/services/${serviceId}/test-case`),
+      body
+    )
+  }
+
+  async updateTestCase(serviceId: string, id: string, body: Json): Promise<unknown> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/test-case/${id}`),
       body
     )
   }
