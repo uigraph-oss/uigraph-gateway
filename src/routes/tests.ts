@@ -94,25 +94,36 @@ const caseSchema = z.object({
     .passthrough(),
 })
 
-async function resolveHttpMethod(
+async function resolveApiSpec(
   api: AppEnv['Variables']['api'],
   serviceId: string,
   apiGroupName: string | undefined,
   operationId: string | undefined
-): Promise<string> {
-  if (!operationId) {
-    return 'GET'
-  }
+): Promise<{ httpMethod: string; apiSpecId?: string }> {
   const groups = await api.listAPIGroups(serviceId)
   const candidates = apiGroupName ? groups.filter((g) => g.name === apiGroupName) : groups
+  if (!operationId) {
+    const group = candidates[0]
+    return {
+      httpMethod: 'GET',
+      apiSpecId: group ? `${serviceId}:${group.id}` : undefined,
+    }
+  }
   for (const group of candidates) {
     const endpoints = await api.listAPIEndpoints(serviceId, group.id)
     const match = endpoints.find((e) => e.operationId === operationId)
-    if (match && match.method) {
-      return match.method.toUpperCase()
+    if (match) {
+      return {
+        httpMethod: match.method ? match.method.toUpperCase() : 'GET',
+        apiSpecId: `${serviceId}:${group.id}`,
+      }
     }
   }
-  return 'GET'
+  const group = candidates[0]
+  return {
+    httpMethod: 'GET',
+    apiSpecId: group ? `${serviceId}:${group.id}` : undefined,
+  }
 }
 
 testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) => {
@@ -148,8 +159,10 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
       postconditions: tc.postconditions,
     }
   } else if (tc.type === 'api') {
+    const apiSpec = await resolveApiSpec(api, serviceId, tc.apiGroupName, tc.operationId)
     payload.api = {
-      httpMethod: await resolveHttpMethod(api, serviceId, tc.apiGroupName, tc.operationId),
+      httpMethod: apiSpec.httpMethod,
+      apiSpecId: apiSpec.apiSpecId,
       operationId: tc.operationId,
       requestBody: tc.requestTemplate,
       expectedStatusCode: tc.expectedStatusCode,
