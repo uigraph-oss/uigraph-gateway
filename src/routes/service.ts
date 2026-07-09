@@ -69,6 +69,7 @@ const protocolByType: Record<string, string> = {
 const apiGroupSchema = z.object({
   apiGroup: z.object({ name: z.string().min(1), type: z.string().min(1) }),
   spec: z.object({ content: z.string(), path: z.string().optional() }),
+  git: z.object({ commitHash: z.string().min(1) }).optional(),
   serviceName: z.string().min(1),
 })
 
@@ -96,6 +97,7 @@ serviceRoutes.post(
       name: body.apiGroup.name,
       protocol: protocolByType[body.apiGroup.type] ?? 'REST',
       spec: body.spec.content,
+      commitHash: body.git?.commitHash,
     })
 
     return c.json({
