@@ -93,4 +93,34 @@ describe('uigraph-gateway', () => {
     )
     expect(hasComponent).toBe(true)
   })
+
+  it('converts ReactFlow content to mermaid', async () => {
+    const content = JSON.stringify({
+      nodes: [
+        { id: 'api', type: 'text', position: { x: 0, y: 0 }, data: { label: 'API' } },
+        { id: 'db', type: 'text', position: { x: 200, y: 0 }, data: { label: 'DB' } },
+      ],
+      edges: [{ id: 'api-db', source: 'api', target: 'db' }],
+    })
+
+    const res = await app.request('/v1/sync/diagrams/to-mermaid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
+      body: JSON.stringify({ content }),
+    })
+
+    expect(res.status).toBe(200)
+    const out = (await res.json()) as { mermaid: string }
+    expect(out.mermaid).toMatch(/^flowchart/)
+  })
+
+  it('rejects non-ReactFlow content with 400', async () => {
+    const res = await app.request('/v1/sync/diagrams/to-mermaid', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
+      body: JSON.stringify({ content: '{"foo":"bar"}' }),
+    })
+
+    expect(res.status).toBe(400)
+  })
 })
