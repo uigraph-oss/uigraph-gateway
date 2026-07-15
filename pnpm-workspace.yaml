@@ -2,3 +2,4 @@ allowBuilds:
   esbuild: true
 minimumReleaseAgeExclude:
   - '@uigraph/sdk'
+  - '@uigraph/ai-sdk@0.0.1'

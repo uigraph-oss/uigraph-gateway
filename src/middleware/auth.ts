@@ -17,3 +17,14 @@ export async function auth(c: Context<{ Variables: GatewayVars }>, next: Next) {
   c.set('api', new UigraphApi(token))
   await next()
 }
+
+export async function chatAuth(c: Context<{ Variables: GatewayVars }>, next: Next) {
+  const header = c.req.header('Authorization')
+  if (!header || !header.startsWith('Bearer ')) {
+    throw new ApiError(401, 'Authorization: Bearer token is required')
+  }
+  const token = header.slice('Bearer '.length)
+  c.set('token', token)
+  c.set('api', new UigraphApi(token, { scheme: 'bearer' }))
+  await next()
+}

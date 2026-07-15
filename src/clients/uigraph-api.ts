@@ -7,13 +7,25 @@ type Json = Record<string, unknown>
 // token as X-API-Key and resolves human-friendly names to UUIDs.
 export class UigraphApi {
   private token: string
+  private scheme: 'api-key' | 'bearer'
   private orgId?: string
 
-  constructor(token: string) {
+  constructor(token: string, opts?: { scheme?: 'api-key' | 'bearer' }) {
     this.token = token
+    this.scheme = opts?.scheme ?? 'api-key'
   }
 
-  private async request<T = unknown>(
+  private authHeader(): Record<string, string> {
+    if (this.scheme === 'bearer') {
+      return { Authorization: `Bearer ${this.token}` }
+    }
+    if (this.scheme === 'api-key') {
+      return { 'X-API-Key': this.token }
+    }
+    throw new Error(`unknown auth scheme: ${this.scheme}`)
+  }
+
+  async request<T = unknown>(
     method: string,
     path: string,
     body?: unknown
@@ -21,7 +33,7 @@ export class UigraphApi {
     const res = await fetch(`${config.UIGRAPH_API_URL}${path}`, {
       method,
       headers: {
-        'X-API-Key': this.token,
+        ...this.authHeader(),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -57,6 +69,19 @@ export class UigraphApi {
   private async orgPath(suffix: string): Promise<string> {
     const orgId = await this.getOrgId()
     return `/api/v1/orgs/${orgId}${suffix}`
+  }
+
+  // ── Chat ────────────────────────────────────────────────────────────────────
+  async createChatMessage(
+    orgId: string,
+    sessionId: string,
+    body: { role: 'user' | 'assistant' | 'system'; content: string }
+  ): Promise<{ id: string }> {
+    return this.request(
+      'POST',
+      `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}/messages`,
+      body
+    )
   }
 
   // ── Services ──────────────────────────────────────────────────────────────

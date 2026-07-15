@@ -14,6 +14,28 @@ const envSchema = z.object({
     .string()
     .optional()
     .transform((v) => v !== 'false'),
+  AI_PROVIDER_NPM: z.string().default('@ai-sdk/openai-compatible'),
+  AI_PROVIDER_OPTIONS: z
+    .string()
+    .optional()
+    .transform((value) => (value ? JSON.parse(value) : undefined))
+    .pipe(z.record(z.string(), z.unknown()).optional()),
+  AI_PROVIDER_API_URL: z.string().url().optional(),
+  AI_PROVIDER_API_KEY: z.string().optional(),
+  AI_PROVIDER_MODEL: z.string().optional(),
+  LLM_MAX_STEP: z.coerce.number().default(25),
+  LLM_ATTACHMENT_IMAGE: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
+  LLM_ATTACHMENT_AUDIO: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
+  LLM_ATTACHMENT_VIDEO: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
 })
 
 export type Config = z.infer<typeof envSchema>
