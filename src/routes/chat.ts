@@ -1,6 +1,6 @@
-import { resolveAiModel } from '@uigraph/ai-sdk'
+import { connectMcpTools, resolveAiModel } from '@uigraph/ai-sdk'
 import { zValidator } from '@hono/zod-validator'
-import { streamText, type ModelMessage } from 'ai'
+import { stepCountIs, streamText, type ModelMessage } from 'ai'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import type { AppEnv } from '../app'
@@ -17,12 +17,16 @@ const chatSchema = z.object({
 chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
   const { orgId, sessionId } = c.req.valid('json')
   const api = c.get('api')
+  const token = c.get('token')
 
   if (!config.AI_PROVIDER_API_KEY) {
     throw new ApiError(500, 'AI provider is not configured')
   }
   if (!config.AI_PROVIDER_MODEL) {
     throw new ApiError(500, 'AI provider is not configured')
+  }
+  if (!config.UIGRAPH_MCP_URL) {
+    throw new ApiError(500, 'MCP server is not configured')
   }
 
   const history = await api.listChatMessages(orgId, sessionId)
@@ -39,9 +43,17 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
     options: config.AI_PROVIDER_OPTIONS,
   })
 
+  const { client, tools } = await connectMcpTools({
+    url: config.UIGRAPH_MCP_URL,
+    orgId,
+    accessToken: token,
+  })
+
   const result = streamText({
     model,
     messages,
+    tools,
+    stopWhen: stepCountIs(config.LLM_MAX_STEP),
   })
 
   return result.toUIMessageStreamResponse({
@@ -54,6 +66,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
         role: 'assistant',
         content: text,
       })
+      await client.close()
     },
   })
 })
