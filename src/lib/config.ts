@@ -24,6 +24,7 @@ const envSchema = z.object({
   AI_PROVIDER_API_KEY: z.string().optional(),
   AI_PROVIDER_MODEL: z.string().optional(),
   UIGRAPH_MCP_URL: z.string().url().optional(),
+  MCP_CACHE_TTL_MS: z.coerce.number().default(15 * 60 * 1000),
   LLM_MAX_STEP: z.coerce.number().default(25),
   LLM_ATTACHMENT_IMAGE: z
     .string()

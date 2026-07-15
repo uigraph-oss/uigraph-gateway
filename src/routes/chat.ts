@@ -1,4 +1,4 @@
-import { connectMcpTools, resolveAiModel } from '@uigraph/ai-sdk'
+import { resolveAiModel } from '@uigraph/ai-sdk'
 import { zValidator } from '@hono/zod-validator'
 import { stepCountIs, streamText, type ModelMessage } from 'ai'
 import { Hono } from 'hono'
@@ -6,6 +6,7 @@ import { z } from 'zod'
 import type { AppEnv } from '../app'
 import { config } from '../lib/config'
 import { ApiError } from '../lib/errors'
+import { getMcpTools } from '../lib/mcp-cache'
 
 export const chatRoutes = new Hono<AppEnv>()
 
@@ -43,11 +44,10 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
     options: config.AI_PROVIDER_OPTIONS,
   })
 
-  const { client, tools } = await connectMcpTools({
+  const { tools } = await getMcpTools({
     url: config.UIGRAPH_MCP_URL,
     orgId,
-    accessToken: token,
-    authType: 'user',
+    token,
   })
 
   const result = streamText({
@@ -56,6 +56,8 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
     tools,
     stopWhen: stepCountIs(config.LLM_MAX_STEP),
   })
+
+  result.consumeStream()
 
   return result.toUIMessageStreamResponse({
     onFinish: async ({ responseMessage }) => {
@@ -67,7 +69,6 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
         role: 'assistant',
         content: text,
       })
-      await client.close()
     },
   })
 })
