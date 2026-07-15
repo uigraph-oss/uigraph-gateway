@@ -72,6 +72,16 @@ export class UigraphApi {
   }
 
   // ── Chat ────────────────────────────────────────────────────────────────────
+  async listChatMessages(
+    orgId: string,
+    sessionId: string
+  ): Promise<Array<{ role: string; content: string }>> {
+    const res = await this.request<{
+      messages?: Array<{ role: string; content: string }>
+    }>('GET', `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}/messages`)
+    return res.messages ?? []
+  }
+
   async createChatMessage(
     orgId: string,
     sessionId: string,

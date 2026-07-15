@@ -1,6 +1,6 @@
 import { resolveAiModel } from '@uigraph/ai-sdk'
 import { zValidator } from '@hono/zod-validator'
-import { convertToModelMessages, streamText, type UIMessage } from 'ai'
+import { streamText, type ModelMessage } from 'ai'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import type { AppEnv } from '../app'
@@ -12,11 +12,10 @@ export const chatRoutes = new Hono<AppEnv>()
 const chatSchema = z.object({
   orgId: z.string().min(1),
   sessionId: z.string().min(1),
-  messages: z.array(z.any()),
 })
 
 chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
-  const { orgId, sessionId, messages } = c.req.valid('json')
+  const { orgId, sessionId } = c.req.valid('json')
   const api = c.get('api')
 
   if (!config.AI_PROVIDER_API_KEY) {
@@ -25,6 +24,12 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
   if (!config.AI_PROVIDER_MODEL) {
     throw new ApiError(500, 'AI provider is not configured')
   }
+
+  const history = await api.listChatMessages(orgId, sessionId)
+  const messages = history.map((m) => ({
+    role: m.role as 'user' | 'assistant' | 'system',
+    content: m.content,
+  })) as ModelMessage[]
 
   const model = resolveAiModel({
     npm: config.AI_PROVIDER_NPM,
@@ -36,7 +41,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
 
   const result = streamText({
     model,
-    messages: await convertToModelMessages(messages as UIMessage[]),
+    messages,
   })
 
   return result.toUIMessageStreamResponse({
