@@ -89,6 +89,18 @@ export class UigraphApi {
     )
   }
 
+  async updateChatSession(
+    orgId: string,
+    sessionId: string,
+    body: { title?: string; isPinned?: boolean }
+  ): Promise<{ id: string }> {
+    return this.request(
+      'PUT',
+      `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}`,
+      body
+    )
+  }
+
   async listServices(): Promise<Array<{ id: string; name: string; teamId?: string }>> {
     const res = await this.request<{
       services?: Array<{ id: string; name: string; teamId?: string }>

@@ -1,6 +1,6 @@
 import { resolveAiModel } from '@uigraph/ai-sdk'
 import { zValidator } from '@hono/zod-validator'
-import { stepCountIs, streamText, type ModelMessage } from 'ai'
+import { generateText, stepCountIs, streamText, type ModelMessage } from 'ai'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import type { AppEnv } from '../app'
@@ -43,6 +43,21 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
     apiUrl: config.AI_PROVIDER_API_URL,
     options: config.AI_PROVIDER_OPTIONS,
   })
+
+  if (messages.length === 1 && messages[0].role === 'user') {
+    const titleModel = resolveAiModel({
+      npm: config.AI_PROVIDER_NPM,
+      model: config.AI_PROVIDER_TITLE_MODEL ?? config.AI_PROVIDER_MODEL,
+      apiKey: config.AI_PROVIDER_API_KEY,
+      apiUrl: config.AI_PROVIDER_API_URL,
+      options: config.AI_PROVIDER_OPTIONS,
+    })
+    const { text } = await generateText({
+      model: titleModel,
+      prompt: `Generate a short, concise title of 3 to 6 words for a conversation that begins with the following message. Respond with only the title, no quotes or punctuation.\n\n${messages[0].content}`,
+    })
+    await api.updateChatSession(orgId, sessionId, { title: text.trim() })
+  }
 
   const { tools } = await getMcpTools({
     url: config.UIGRAPH_MCP_URL,
