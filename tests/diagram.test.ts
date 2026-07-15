@@ -103,7 +103,7 @@ describe('uigraph-gateway', () => {
       edges: [{ id: 'api-db', source: 'api', target: 'db' }],
     })
 
-    const res = await app.request('/v1/sync/diagrams/to-mermaid', {
+    const res = await app.request('/v1/util/diagrams/to-mermaid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
       body: JSON.stringify({ content }),
@@ -115,7 +115,7 @@ describe('uigraph-gateway', () => {
   })
 
   it('rejects non-ReactFlow content with 400', async () => {
-    const res = await app.request('/v1/sync/diagrams/to-mermaid', {
+    const res = await app.request('/v1/util/diagrams/to-mermaid', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
       body: JSON.stringify({ content: '{"foo":"bar"}' }),

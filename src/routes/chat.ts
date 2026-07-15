@@ -47,6 +47,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
     url: config.UIGRAPH_MCP_URL,
     orgId,
     accessToken: token,
+    authType: 'user',
   })
 
   const result = streamText({

@@ -3,3 +3,4 @@ allowBuilds:
 minimumReleaseAgeExclude:
   - '@uigraph/sdk'
   - '@uigraph/ai-sdk@0.0.1'
+  - '@uigraph/ai-sdk@0.0.2'

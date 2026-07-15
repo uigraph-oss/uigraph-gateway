@@ -1,8 +1,9 @@
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
-import { auth, chatAuth, type GatewayVars } from './middleware/auth'
+import { auth, chatAuth, flexAuth, type GatewayVars } from './middleware/auth'
 import { onError } from './middleware/error'
 import { chatRoutes } from './routes/chat'
+import { conversionRoutes } from './routes/conversion'
 import { diagramRoutes } from './routes/diagram'
 import { docsRoutes } from './routes/docs'
 import { mapRoutes } from './routes/maps'
@@ -35,6 +36,12 @@ export function createApp() {
   ai.route('/', chatRoutes)
 
   app.route('/v1/ai', ai)
+
+  const util = new Hono<AppEnv>()
+  util.use('*', flexAuth)
+  util.route('/', conversionRoutes)
+
+  app.route('/v1/util', util)
 
   return app
 }
