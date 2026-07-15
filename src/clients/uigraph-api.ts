@@ -3,17 +3,27 @@ import { ApiError } from '../lib/errors'
 
 type Json = Record<string, unknown>
 
-// Thin typed client over the Go backend. Forwards the caller's service-account
-// token as X-API-Key and resolves human-friendly names to UUIDs.
 export class UigraphApi {
   private token: string
+  private scheme: 'api-key' | 'bearer'
   private orgId?: string
 
-  constructor(token: string) {
+  constructor(token: string, opts?: { scheme?: 'api-key' | 'bearer' }) {
     this.token = token
+    this.scheme = opts?.scheme ?? 'api-key'
   }
 
-  private async request<T = unknown>(
+  private authHeader(): Record<string, string> {
+    if (this.scheme === 'bearer') {
+      return { Authorization: `Bearer ${this.token}` }
+    }
+    if (this.scheme === 'api-key') {
+      return { 'X-API-Key': this.token }
+    }
+    throw new Error(`unknown auth scheme: ${this.scheme}`)
+  }
+
+  async request<T = unknown>(
     method: string,
     path: string,
     body?: unknown
@@ -21,7 +31,7 @@ export class UigraphApi {
     const res = await fetch(`${config.UIGRAPH_API_URL}${path}`, {
       method,
       headers: {
-        'X-API-Key': this.token,
+        ...this.authHeader(),
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -35,7 +45,6 @@ export class UigraphApi {
         message =
           (parsed.message as string) || (parsed.error as string) || message
       } catch {
-        /* keep raw text */
       }
       throw new ApiError(res.status, message)
     }
@@ -43,7 +52,6 @@ export class UigraphApi {
     return (text ? JSON.parse(text) : {}) as T
   }
 
-  // ── Org resolution ────────────────────────────────────────────────────────
   async getOrgId(): Promise<string> {
     if (this.orgId) return this.orgId
     const me = await this.request<{ orgId?: string }>('GET', '/api/v1/auth/me')
@@ -59,7 +67,44 @@ export class UigraphApi {
     return `/api/v1/orgs/${orgId}${suffix}`
   }
 
-  // ── Services ──────────────────────────────────────────────────────────────
+  async listChatMessages(
+    orgId: string,
+    sessionId: string
+  ): Promise<Array<{ role: string; content: string }>> {
+    const res = await this.request<{
+      messages?: Array<{ role: string; content: string }>
+    }>('GET', `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}/messages`)
+    return res.messages ?? []
+  }
+
+  async createChatMessage(
+    orgId: string,
+    sessionId: string,
+    body: {
+      role: 'user' | 'assistant' | 'system'
+      content: string
+      parts?: unknown
+    }
+  ): Promise<{ id: string }> {
+    return this.request(
+      'POST',
+      `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}/messages`,
+      body
+    )
+  }
+
+  async updateChatSession(
+    orgId: string,
+    sessionId: string,
+    body: { title?: string; isPinned?: boolean }
+  ): Promise<{ id: string }> {
+    return this.request(
+      'PUT',
+      `/api/v1/orgs/${orgId}/chat-sessions/${sessionId}`,
+      body
+    )
+  }
+
   async listServices(): Promise<Array<{ id: string; name: string; teamId?: string }>> {
     const res = await this.request<{
       services?: Array<{ id: string; name: string; teamId?: string }>
@@ -85,7 +130,6 @@ export class UigraphApi {
     return this.request('PUT', await this.orgPath(`/services/${serviceId}`), body)
   }
 
-  // ── Service diagrams ────────────────────────────────────────────────────────
   async listServiceDiagrams(
     serviceId: string
   ): Promise<Array<{ diagram?: { id: string; name: string } }>> {
@@ -103,7 +147,6 @@ export class UigraphApi {
     )
   }
 
-  // Standalone diagram sync (hash-skip + auto-version) for already-linked diagrams.
   async syncDiagram(
     body: Json
   ): Promise<{ diagramId: string; versionCreated: boolean }> {
@@ -118,7 +161,6 @@ export class UigraphApi {
     return this.request('PUT', await this.orgPath(`/diagrams/${diagramId}`), body)
   }
 
-  // ── Service databases ──────────────────────────────────────────────────────
   async listDBs(
     serviceId: string
   ): Promise<Array<{ id: string; dbName: string; schemaJson?: unknown }>> {
@@ -140,9 +182,6 @@ export class UigraphApi {
     )
   }
 
-  // Idempotent upsert-by-sourceRef, backed by a real Postgres unique constraint
-  // on the uigraph-api side — unlike listDBs/createDB/updateDB above, there is
-  // no list-then-decide step here, so concurrent syncs can't create duplicates.
   async syncSavedQuery(
     serviceId: string,
     dbId: string,
@@ -155,7 +194,6 @@ export class UigraphApi {
     )
   }
 
-  // ── API groups ──────────────────────────────────────────────────────────────
   async listAPIGroups(serviceId: string): Promise<Array<{ id: string; name: string }>> {
     const res = await this.request<{ apiGroups?: Array<{ id: string; name: string }> }>(
       'GET',
@@ -188,7 +226,6 @@ export class UigraphApi {
     return res.endpoints ?? []
   }
 
-  // ── Tests ────────────────────────────────────────────────────────────────────
   async listTestPacks(serviceId: string): Promise<Array<{ testPackId: string; name: string }>> {
     const res = await this.request<{ testPacks?: Array<{ testPackId: string; name: string }> }>(
       'GET',
@@ -234,7 +271,6 @@ export class UigraphApi {
     )
   }
 
-  // ── Docs ──────────────────────────────────────────────────────────────────────
   async listDocs(
     serviceId: string
   ): Promise<Array<{ id: string; fileName: string; contentHash: string }>> {
@@ -261,7 +297,6 @@ export class UigraphApi {
     return this.request('PUT', await this.orgPath(`/docs/${docId}`), body)
   }
 
-  // ── Maps / frames / focal points ───────────────────────────────────────────────
   async listMaps(): Promise<Array<{ id: string; name: string }>> {
     const res = await this.request<{ maps?: Array<{ id: string; name: string }> }>(
       'GET',

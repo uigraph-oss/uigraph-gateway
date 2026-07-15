@@ -50,7 +50,7 @@ pnpm dev
 
 ```bash
 pnpm test
-pnpm tc    # typecheck
+pnpm typecheck
 ```
 
 ## License
