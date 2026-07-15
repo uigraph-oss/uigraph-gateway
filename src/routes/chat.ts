@@ -83,6 +83,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
       await api.createChatMessage(orgId, sessionId, {
         role: 'assistant',
         content: text,
+        parts: responseMessage.parts,
       })
     },
   })

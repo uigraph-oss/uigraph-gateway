@@ -80,7 +80,11 @@ export class UigraphApi {
   async createChatMessage(
     orgId: string,
     sessionId: string,
-    body: { role: 'user' | 'assistant' | 'system'; content: string }
+    body: {
+      role: 'user' | 'assistant' | 'system'
+      content: string
+      parts?: unknown
+    }
   ): Promise<{ id: string }> {
     return this.request(
       'POST',
