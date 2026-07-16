@@ -111,25 +111,20 @@ serviceRoutes.post(
 const dependencySchema = z.object({
   name: z.string().min(1),
   service: z.string().min(1),
-  type: z.enum(['http', 'grpc', 'event', 'queue', 'database']),
+  type: z.enum(['http', 'graphql', 'grpc', 'database']).optional(),
   criticality: z.enum(['hard', 'soft']),
   description: z.string().optional(),
-  api: z.string().optional(),
-  operations: z.array(z.string().min(1)).optional(),
+  apiGroupName: z.string().optional(),
+  apiEndpointNames: z.array(z.string().min(1)).optional(),
+  databaseName: z.string().optional(),
 }).superRefine((dependency, ctx) => {
-  if ((dependency.type === 'http' || dependency.type === 'grpc') && !dependency.api) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'api is required for http and grpc dependencies', path: ['api'] })
-  }
-  if (dependency.type !== 'http' && dependency.type !== 'grpc' && (dependency.api || (dependency.operations && dependency.operations.length > 0))) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'api and operations are only allowed for http and grpc dependencies', path: ['api'] })
-  }
-  if (dependency.operations) {
+  if (dependency.apiEndpointNames) {
     const seen = new Set<string>()
-    for (const op of dependency.operations) {
-      if (seen.has(op)) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `duplicate operation: ${op}`, path: ['operations'] })
+    for (const endpointName of dependency.apiEndpointNames) {
+      if (seen.has(endpointName)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `duplicate api endpoint name: ${endpointName}`, path: ['apiEndpointNames'] })
       }
-      seen.add(op)
+      seen.add(endpointName)
     }
   }
 })
