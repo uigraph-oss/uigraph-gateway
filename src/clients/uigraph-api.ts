@@ -194,6 +194,14 @@ export class UigraphApi {
     )
   }
 
+  async syncServiceDependencies(serviceId: string, body: Json): Promise<unknown> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/dependencies/sync`),
+      body
+    )
+  }
+
   async listAPIGroups(serviceId: string): Promise<Array<{ id: string; name: string }>> {
     const res = await this.request<{ apiGroups?: Array<{ id: string; name: string }> }>(
       'GET',

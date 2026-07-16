@@ -108,6 +108,62 @@ serviceRoutes.post(
   }
 )
 
+const dependencySchema = z.object({
+  name: z.string().min(1),
+  service: z.string().min(1),
+  type: z.enum(['http', 'grpc', 'event', 'queue', 'database']),
+  criticality: z.enum(['hard', 'soft']),
+  description: z.string().optional(),
+  api: z.string().optional(),
+  operations: z.array(z.string().min(1)).optional(),
+}).superRefine((dependency, ctx) => {
+  if ((dependency.type === 'http' || dependency.type === 'grpc') && !dependency.api) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'api is required for http and grpc dependencies', path: ['api'] })
+  }
+  if (dependency.type !== 'http' && dependency.type !== 'grpc' && (dependency.api || (dependency.operations && dependency.operations.length > 0))) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'api and operations are only allowed for http and grpc dependencies', path: ['api'] })
+  }
+  if (dependency.operations) {
+    const seen = new Set<string>()
+    for (const op of dependency.operations) {
+      if (seen.has(op)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: `duplicate operation: ${op}`, path: ['operations'] })
+      }
+      seen.add(op)
+    }
+  }
+})
+
+const dependenciesSchema = z.object({
+  serviceName: z.string().min(1),
+  dependencies: z.array(dependencySchema).refine(
+    (deps) => new Set(deps.map(d => d.name)).size === deps.length,
+    { message: 'dependency names must be unique' }
+  ),
+}).superRefine((data, ctx) => {
+  for (const dep of data.dependencies) {
+    if (dep.service === data.serviceName) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: `dependency "${dep.name}" must not reference the current service`, path: ['dependencies'] })
+    }
+  }
+})
+
+serviceRoutes.post(
+  '/service/dependencies',
+  zValidator('json', dependenciesSchema),
+  async (c) => {
+    const body = c.req.valid('json')
+    const api = c.get('api')
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (!serviceId) {
+      throw new ApiError(404, `service "${body.serviceName}" not found — sync the service first`)
+    }
+
+    await api.syncServiceDependencies(serviceId, { dependencies: body.dependencies })
+    return c.json({ message: 'dependencies synced' })
+  }
+)
+
 const sqlDialectMap: Record<string, string> = {
   postgres: 'postgresql',
   mysql: 'mysql',
