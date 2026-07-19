@@ -15,8 +15,8 @@ importers:
         specifier: ^0.4.3
         version: 0.4.3(hono@4.12.30)(zod@3.25.76)
       '@uigraph/ai-sdk':
-        specifier: ^1.0.2
-        version: 1.0.2(ai@7.0.26(zod@3.25.76))
+        specifier: ^1.0.3
+        version: 1.0.3(ai@7.0.26(zod@3.25.76))
       '@uigraph/sdk':
         specifier: ^1.2.1
         version: 1.2.1(@xyflow/react@12.11.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(quill@2.0.3)(supports-color@5.5.0)(zod@3.25.76)
@@ -661,8 +661,8 @@ packages:
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
 
-  '@uigraph/ai-sdk@1.0.2':
-    resolution: {integrity: sha512-8Ltq0aLJT48XvaozOtfCm0UzWzfVT2ftiyVFx4H3WYyNfgrNuRMPQ56KEcNhIjyedaYlE/whfagZYlGKbNp/WQ==}
+  '@uigraph/ai-sdk@1.0.3':
+    resolution: {integrity: sha512-1vfXG2LsUvw/TgMdcFz2edwM7rq4BDrbG71cXQ7gbUndI/WSfi96kvt9wBa8PYw1VTbADL+6EaKll+c0qhid5A==}
     peerDependencies:
       ai: ^7.0.22
 
@@ -2098,7 +2098,7 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@uigraph/ai-sdk@1.0.2(ai@7.0.26(zod@3.25.76))':
+  '@uigraph/ai-sdk@1.0.3(ai@7.0.26(zod@3.25.76))':
     dependencies:
       ai: 7.0.26(zod@3.25.76)
 
