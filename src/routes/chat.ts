@@ -21,14 +21,29 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
   const api = c.get('api')
   const token = c.get('token')
 
+  if (!config.AI_PROVIDER_NPM && !config.AI_PROVIDER_API_URL) {
+    throw new ApiError(
+      500,
+      'AI provider is not configured',
+      'AI_PROVIDER_NOT_CONFIGURED'
+    )
+  }
   if (!config.AI_PROVIDER_API_KEY) {
-    throw new ApiError(500, 'AI provider is not configured')
+    throw new ApiError(
+      500,
+      'AI provider is not configured',
+      'AI_PROVIDER_NOT_CONFIGURED'
+    )
   }
   if (!config.AI_PROVIDER_MODEL) {
-    throw new ApiError(500, 'AI provider is not configured')
+    throw new ApiError(
+      500,
+      'AI provider is not configured',
+      'AI_PROVIDER_NOT_CONFIGURED'
+    )
   }
   if (!config.UIGRAPH_MCP_URL) {
-    throw new ApiError(500, 'MCP server is not configured')
+    throw new ApiError(500, 'MCP server is not configured', 'MCP_NOT_CONFIGURED')
   }
 
   const history = await api.listChatMessages(orgId, sessionId)

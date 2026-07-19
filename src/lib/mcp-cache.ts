@@ -36,6 +36,7 @@ export async function getMcpTools(
     orgId: input.orgId,
     accessToken: input.token,
     authType: 'user',
+    clientName: 'UiGraph AI Chat',
   })
 
   delete tools.get_current_user
