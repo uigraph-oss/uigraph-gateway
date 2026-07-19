@@ -2,9 +2,11 @@
 // The Go CLI's formatGatewayError reads the JSON `message` field on 400/5xx.
 export class ApiError extends Error {
   statusCode: number
-  constructor(statusCode: number, message: string) {
+  code?: string
+  constructor(statusCode: number, message: string, code?: string) {
     super(message)
     this.statusCode = statusCode
+    this.code = code
     this.name = 'ApiError'
   }
 }

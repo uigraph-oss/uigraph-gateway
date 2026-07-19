@@ -12,7 +12,7 @@ export function onError(err: Error, c: Context) {
     return c.json({ message }, 400)
   }
   if (err instanceof ApiError) {
-    return c.json({ message: err.message }, err.statusCode as 400)
+    return c.json({ message: err.message, code: err.code }, err.statusCode as 400)
   }
   if (err instanceof HTTPException) {
     return c.json({ message: err.message }, err.status)
