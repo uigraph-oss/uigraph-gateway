@@ -4,6 +4,7 @@ import { generateText, stepCountIs, streamText, type ModelMessage } from 'ai'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import type { AppEnv } from '../app'
+import { AI_ASSIST_SYSTEM_PROMPT } from '../constants/system-prompt'
 import { config } from '../lib/config'
 import { ApiError } from '../lib/errors'
 import { getMcpTools } from '../lib/mcp-cache'
@@ -67,6 +68,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
 
   const result = streamText({
     model,
+    system: AI_ASSIST_SYSTEM_PROMPT,
     messages,
     tools,
     stopWhen: stepCountIs(config.LLM_MAX_STEP),
