@@ -105,6 +105,42 @@ export class UigraphApi {
     )
   }
 
+  async syncMlProjects(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/projects/sync'), body)
+  }
+
+  async syncMlModels(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/models/sync'), body)
+  }
+
+  async syncMlVersions(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/versions/sync'), body)
+  }
+
+  async syncMlExperiments(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/experiments/sync'), body)
+  }
+
+  async syncMlRuns(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/runs/sync'), body)
+  }
+
+  async syncMlRunSeries(runId: string, body: Json[]): Promise<{ synced: number }> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/ml/runs/${encodeURIComponent(runId)}/series/sync`),
+      body
+    )
+  }
+
+  async syncMlArtifacts(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/artifacts/sync'), body)
+  }
+
+  async syncMlDatasets(body: Json[]): Promise<{ synced: number }> {
+    return this.request('POST', await this.orgPath('/ml/datasets/sync'), body)
+  }
+
   async listServices(): Promise<Array<{ id: string; name: string; teamId?: string }>> {
     const res = await this.request<{
       services?: Array<{ id: string; name: string; teamId?: string }>

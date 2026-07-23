@@ -7,6 +7,7 @@ import { conversionRoutes } from './routes/conversion'
 import { diagramRoutes } from './routes/diagram'
 import { docsRoutes } from './routes/docs'
 import { mapRoutes } from './routes/maps'
+import { mlRoutes } from './routes/ml'
 import { serviceRoutes } from './routes/service'
 import { testRoutes } from './routes/tests'
 
@@ -28,6 +29,7 @@ export function createApp() {
   sync.route('/', testRoutes)
   sync.route('/', docsRoutes)
   sync.route('/', mapRoutes)
+  sync.route('/', mlRoutes)
 
   app.route('/v1/sync', sync)
 
