@@ -59,6 +59,13 @@ const datasetSchema = z
   })
   .passthrough()
 
+const evaluationSchema = z
+  .object({
+    mlflowId: z.string().min(1),
+    versionMlflowId: z.string().min(1),
+  })
+  .passthrough()
+
 mlRoutes.post(
   '/ml/projects',
   zValidator('json', z.array(projectSchema)),
@@ -121,6 +128,16 @@ mlRoutes.post(
   async (c) => {
     const api = c.get('api')
     const res = await api.syncMlDatasets(c.req.valid('json'))
+    return c.json(res)
+  }
+)
+
+mlRoutes.post(
+  '/ml/evaluations',
+  zValidator('json', z.array(evaluationSchema)),
+  async (c) => {
+    const api = c.get('api')
+    const res = await api.syncMlEvaluations(c.req.valid('json'))
     return c.json(res)
   }
 )

@@ -133,6 +133,14 @@ export class UigraphApi {
     return this.request('POST', await this.orgPath('/ml/datasets/sync'), body)
   }
 
+  async syncMlEvaluations(body: Json[]): Promise<{ synced: number }> {
+    return this.request(
+      'POST',
+      await this.orgPath('/ml/evaluations/sync'),
+      body
+    )
+  }
+
   async listServices(): Promise<Array<{ id: string; name: string; teamId?: string }>> {
     const res = await this.request<{
       services?: Array<{ id: string; name: string; teamId?: string }>
