@@ -63,6 +63,7 @@ const evaluationSchema = z
   .object({
     mlflowId: z.string().min(1),
     versionMlflowId: z.string().min(1),
+    experimentMlflowId: z.string().min(1),
   })
   .passthrough()
 
