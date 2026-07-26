@@ -125,14 +125,6 @@ export class UigraphApi {
     return this.request('POST', await this.orgPath('/ml/runs/sync'), body)
   }
 
-  async syncMlRunSeries(runId: string, body: Json[]): Promise<{ synced: number }> {
-    return this.request(
-      'POST',
-      await this.orgPath(`/ml/runs/${encodeURIComponent(runId)}/series/sync`),
-      body
-    )
-  }
-
   async syncMlArtifacts(body: Json[]): Promise<{ synced: number }> {
     return this.request('POST', await this.orgPath('/ml/artifacts/sync'), body)
   }

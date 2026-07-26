@@ -45,14 +45,6 @@ const runSchema = z
   })
   .passthrough()
 
-const seriesPointSchema = z
-  .object({
-    key: z.string().min(1),
-    step: z.number(),
-    value: z.number(),
-  })
-  .passthrough()
-
 const artifactSchema = z
   .object({
     mlflowId: z.string().min(1),
@@ -112,19 +104,6 @@ mlRoutes.post('/ml/runs', zValidator('json', z.array(runSchema)), async (c) => {
   const res = await api.syncMlRuns(c.req.valid('json'))
   return c.json(res)
 })
-
-mlRoutes.post(
-  '/ml/runs/:runId/series',
-  zValidator('json', z.array(seriesPointSchema)),
-  async (c) => {
-    const api = c.get('api')
-    const res = await api.syncMlRunSeries(
-      c.req.param('runId'),
-      c.req.valid('json')
-    )
-    return c.json(res)
-  }
-)
 
 mlRoutes.post(
   '/ml/artifacts',
