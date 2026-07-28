@@ -2,6 +2,9 @@ import { z } from 'zod'
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(8080),
+  DEPLOYMENT_ENV: z
+    .enum(['local', 'development', 'production'])
+    .default('production'),
   // Base URL of the Go backend, e.g. http://localhost:8081 (no trailing slash)
   UIGRAPH_API_URL: z.string().url(),
   STORAGE_ENDPOINT: z.string().url(),

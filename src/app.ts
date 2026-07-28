@@ -7,6 +7,8 @@ import { conversionRoutes } from './routes/conversion'
 import { diagramRoutes } from './routes/diagram'
 import { docsRoutes } from './routes/docs'
 import { mapRoutes } from './routes/maps'
+import { mlRoutes } from './routes/ml'
+import { proxyRoutes } from './routes/proxy'
 import { serviceRoutes } from './routes/service'
 import { testRoutes } from './routes/tests'
 
@@ -20,6 +22,10 @@ export function createApp() {
 
   app.get('/healthz', (c) => c.json({ status: 'ok' }))
 
+  // Unauthenticated: lets the browser read metadata from third-party URLs that
+  // would otherwise be blocked by CORS.
+  app.route('/v1/proxy', proxyRoutes)
+
   // Everything under /v1/sync requires the CLI service-account token.
   const sync = new Hono<AppEnv>()
   sync.use('*', auth)
@@ -28,6 +34,7 @@ export function createApp() {
   sync.route('/', testRoutes)
   sync.route('/', docsRoutes)
   sync.route('/', mapRoutes)
+  sync.route('/', mlRoutes)
 
   app.route('/v1/sync', sync)
 
