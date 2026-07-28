@@ -18,8 +18,8 @@ importers:
         specifier: ^1.0.3
         version: 1.0.3(ai@7.0.26(zod@3.25.76))
       '@uigraph/sdk':
-        specifier: ^1.2.2
-        version: 1.2.2(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)
+        specifier: ^1.2.3
+        version: 1.2.3(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)
       ai:
         specifier: ^7.0.26
         version: 7.0.26(zod@3.25.76)
@@ -666,8 +666,8 @@ packages:
     peerDependencies:
       ai: ^7.0.22
 
-  '@uigraph/sdk@1.2.2':
-    resolution: {integrity: sha512-xxnJN5Yp9RWpLiwJ/cJPqqM2Gd7RqPMZHdEVM3k9GFBhLQ2W6vhVV64JbY4tG8OjYBm5Ns0ffIvkKtzd43gfTg==}
+  '@uigraph/sdk@1.2.3':
+    resolution: {integrity: sha512-OunIfBq+bll5KnVNc8Gvosg/+zVNvFn9UeH3O3zLpyZBXPq00NJcLpc/qTR/hwsEQ4HaqXSGT9D5+rKropeBEg==}
     peerDependencies:
       '@xyflow/react': ^12
       quill: '*'
@@ -2102,7 +2102,7 @@ snapshots:
     dependencies:
       ai: 7.0.26(zod@3.25.76)
 
-  '@uigraph/sdk@1.2.2(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)':
+  '@uigraph/sdk@1.2.3(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)':
     dependencies:
       '@xyflow/react': 12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       dagre: 0.8.5
