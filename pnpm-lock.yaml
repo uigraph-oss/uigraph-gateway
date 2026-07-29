@@ -18,8 +18,8 @@ importers:
         specifier: ^1.0.3
         version: 1.0.3(ai@7.0.37(zod@3.25.76))
       '@uigraph/sdk':
-        specifier: ^1.2.4
-        version: 1.2.4(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)
+        specifier: ^1.2.5
+        version: 1.2.5(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)
       ai:
         specifier: ^7.0.37
         version: 7.0.37(zod@3.25.76)
@@ -53,7 +53,7 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^2.1.9
-        version: 2.1.9(@types/node@22.20.1)
+        version: 2.1.9(@types/node@22.20.1)(supports-color@5.5.0)
 
 packages:
 
@@ -666,8 +666,8 @@ packages:
     peerDependencies:
       ai: ^7.0.22
 
-  '@uigraph/sdk@1.2.4':
-    resolution: {integrity: sha512-ctvCFi3GBWBldanMT8Maq0rv84SU/avBBeCzzg2Gwrsv+lfvkqQ7wcU5yLCChAOhv2FcnAtfMicDiaht69LR4g==}
+  '@uigraph/sdk@1.2.5':
+    resolution: {integrity: sha512-Ny/gqgslBp8TP1/hlDajx/GRJoUp+7MqQeeM1qBaZVxgEiVDzxCRJ+ZBT4fiSBZjayrLL5r9LqT0FxEIOF2PSA==}
     peerDependencies:
       '@xyflow/react': ^12
       quill: '*'
@@ -2102,7 +2102,7 @@ snapshots:
     dependencies:
       ai: 7.0.37(zod@3.25.76)
 
-  '@uigraph/sdk@1.2.4(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)':
+  '@uigraph/sdk@1.2.5(@xyflow/react@12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(quill@2.0.3)(zod@3.25.76)':
     dependencies:
       '@xyflow/react': 12.11.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       dagre: 0.8.5
@@ -3274,7 +3274,7 @@ snapshots:
 
   uuid@14.0.1: {}
 
-  vite-node@2.1.9(@types/node@22.20.1):
+  vite-node@2.1.9(@types/node@22.20.1)(supports-color@5.5.0):
     dependencies:
       cac: 6.7.14
       debug: 4.4.3(supports-color@5.5.0)
@@ -3301,7 +3301,7 @@ snapshots:
       '@types/node': 22.20.1
       fsevents: 2.3.3
 
-  vitest@2.1.9(@types/node@22.20.1):
+  vitest@2.1.9(@types/node@22.20.1)(supports-color@5.5.0):
     dependencies:
       '@vitest/expect': 2.1.9
       '@vitest/mocker': 2.1.9(vite@5.4.21(@types/node@22.20.1))
@@ -3321,7 +3321,7 @@ snapshots:
       tinypool: 1.1.1
       tinyrainbow: 1.2.0
       vite: 5.4.21(@types/node@22.20.1)
-      vite-node: 2.1.9(@types/node@22.20.1)
+      vite-node: 2.1.9(@types/node@22.20.1)(supports-color@5.5.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       '@types/node': 22.20.1
