@@ -24,7 +24,7 @@ describe('service dependency sync', () => {
       return new Response(JSON.stringify({ message: `unexpected ${url}` }), { status: 500 })
     }))
 
-    const dependency = { name: 'payment-provider', service: 'Stripe Payments', type: 'http', criticality: 'hard', description: 'Charges cards', apiGroupName: 'payments-v1', apiEndpointNames: ['CreatePayment'] }
+    const dependency = { name: 'payment-provider', service: 'Stripe Payments', direction: 'downstream', type: 'http', criticality: 'hard', description: 'Charges cards', apiGroupName: 'payments-v1', apiEndpointNames: ['CreatePayment'] }
     const res = await app.request('/v1/sync/service/dependencies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
@@ -48,8 +48,8 @@ describe('service dependency sync', () => {
       return new Response(JSON.stringify({ message: `unexpected ${url}` }), { status: 500 })
     }))
 
-    const dbDependency = { name: 'orders-store', service: 'Orders DB', type: 'database', criticality: 'hard', databaseName: 'orders' }
-    const bareDependency = { name: 'some-service', service: 'Unknown Service', criticality: 'soft' }
+    const dbDependency = { name: 'orders-store', service: 'Orders DB', direction: 'downstream', type: 'database', criticality: 'hard', databaseName: 'orders' }
+    const bareDependency = { name: 'some-service', service: 'Unknown Service', direction: 'upstream', criticality: 'soft' }
     const res = await app.request('/v1/sync/service/dependencies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
@@ -64,7 +64,25 @@ describe('service dependency sync', () => {
     const res = await app.request('/v1/sync/service/dependencies', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
-      body: JSON.stringify({ serviceName: 'payments', dependencies: [{ name: 'x', service: 'Y', type: 'http', criticality: 'hard', apiGroupName: 'v1', apiEndpointNames: ['CreatePayment', 'CreatePayment'] }] }),
+      body: JSON.stringify({ serviceName: 'payments', dependencies: [{ name: 'x', service: 'Y', direction: 'downstream', type: 'http', criticality: 'hard', apiGroupName: 'v1', apiEndpointNames: ['CreatePayment', 'CreatePayment'] }] }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects a dependency without a direction', async () => {
+    const res = await app.request('/v1/sync/service/dependencies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
+      body: JSON.stringify({ serviceName: 'payments', dependencies: [{ name: 'x', service: 'Y', type: 'http', criticality: 'hard' }] }),
+    })
+    expect(res.status).toBe(400)
+  })
+
+  it('rejects a dependency with a non upstream/downstream direction', async () => {
+    const res = await app.request('/v1/sync/service/dependencies', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-API-Token': 'uig_tok' },
+      body: JSON.stringify({ serviceName: 'payments', dependencies: [{ name: 'x', service: 'Y', direction: 'up', type: 'http', criticality: 'hard' }] }),
     })
     expect(res.status).toBe(400)
   })
