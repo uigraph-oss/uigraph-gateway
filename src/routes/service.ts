@@ -111,6 +111,7 @@ serviceRoutes.post(
 const dependencySchema = z.object({
   name: z.string().min(1),
   service: z.string().min(1),
+  direction: z.enum(['upstream', 'downstream']),
   type: z.enum(['http', 'graphql', 'grpc', 'database']).optional(),
   criticality: z.enum(['hard', 'soft']),
   description: z.string().optional(),
