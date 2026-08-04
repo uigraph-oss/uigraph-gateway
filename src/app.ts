@@ -5,6 +5,7 @@ import { onError } from './middleware/error'
 import { chatRoutes } from './routes/chat'
 import { conversionRoutes } from './routes/conversion'
 import { diagramRoutes } from './routes/diagram'
+import { diagramBeautifyRoutes } from './routes/diagram-beautify'
 import { docsRoutes } from './routes/docs'
 import { mapRoutes } from './routes/maps'
 import { mlRoutes } from './routes/ml'
@@ -41,6 +42,7 @@ export function createApp() {
   const ai = new Hono<AppEnv>()
   ai.use('*', chatAuth)
   ai.route('/', chatRoutes)
+  ai.route('/', diagramBeautifyRoutes)
 
   app.route('/v1/ai', ai)
 
