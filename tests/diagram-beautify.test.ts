@@ -94,6 +94,8 @@ describe('buildDiagramDigest', () => {
       type: 'shape',
       shape: 'rectangle',
       label: 'api',
+      x: 0,
+      y: 0,
       width: 150,
       height: 60,
       fill: '#FFFFFF',
@@ -101,6 +103,8 @@ describe('buildDiagramDigest', () => {
     expect(digest.nodes[1]).toEqual({
       id: 'grp',
       type: 'group',
+      x: 0,
+      y: 0,
       width: 400,
       height: 200,
       fill: '#111111',
@@ -111,6 +115,8 @@ describe('buildDiagramDigest', () => {
       type: 'shape',
       label: 'Postgres',
       parent: 'grp',
+      x: 0,
+      y: 0,
       width: 120,
       height: 40,
     })
@@ -121,6 +127,15 @@ describe('buildDiagramDigest', () => {
       label: 'query',
       stroke: '#2C5CF6',
     })
+  })
+
+  it('reports rounded node positions', () => {
+    const digest = buildDiagramDigest(
+      [shapeNode('api', { position: { x: 120.4, y: -80.6 } })],
+      []
+    )
+
+    expect(digest.nodes[0]).toMatchObject({ x: 120, y: -81 })
   })
 })
 

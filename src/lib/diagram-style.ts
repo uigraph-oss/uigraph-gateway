@@ -97,6 +97,11 @@ function pickNumber(value: unknown): number | undefined {
   return value
 }
 
+function roundOrUndefined(value: number | undefined) {
+  if (value === undefined) return undefined
+  return Math.round(value)
+}
+
 function clamp(
   value: number | undefined,
   min: number,
@@ -175,6 +180,7 @@ export function buildDiagramDigest(
     nodes: nodes.map((node) => {
       const data = toRecord(node.data)
       const size = resolveNodeSize(node)
+      const position = toRecord(node.position)
 
       return dropUndefined({
         id: pickString(node.id),
@@ -182,6 +188,8 @@ export function buildDiagramDigest(
         shape: pickString(data?.shape),
         label: resolveNodeLabel(data),
         parent: pickString(node.parentId),
+        x: roundOrUndefined(pickNumber(position?.x)),
+        y: roundOrUndefined(pickNumber(position?.y)),
         width: size.width,
         height: size.height,
         fill: pickString(data?.fill) ?? pickString(data?.backgroundColor),
