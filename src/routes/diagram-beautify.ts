@@ -81,7 +81,7 @@ diagramBeautifyRoutes.post(
     if (nodes.length > MAX_NODES || edges.length > MAX_EDGES) {
       throw new ApiError(
         400,
-        `diagram is too large to beautify — limit is ${MAX_NODES} nodes and ${MAX_EDGES} edges`,
+        `diagram is too large to beautify. The limit is ${MAX_NODES} nodes and ${MAX_EDGES} edges`,
         'DIAGRAM_TOO_LARGE'
       )
     }
