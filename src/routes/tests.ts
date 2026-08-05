@@ -72,6 +72,7 @@ const caseSchema = z.object({
       testOwner: z.string().optional(),
       isCritical: z.boolean().optional(),
       requiresEvidence: z.boolean().optional(),
+      screenshotUrls: z.array(z.string()).optional(),
       // manual
       stepsList: z
         .array(z.object({ action: z.string(), expectedResult: z.string().optional() }))
@@ -145,6 +146,7 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
     testOwner: tc.testOwner,
     isCritical: tc.isCritical ?? false,
     evidenceRequired: tc.requiresEvidence ?? false,
+    screenshotUrls: tc.screenshotUrls,
   }
 
   if (tc.type === 'manual') {
@@ -183,3 +185,35 @@ testRoutes.post('/service/test-case', zValidator('json', caseSchema), async (c) 
   await api.createTestCase(serviceId, payload)
   return c.json({ title: tc.title })
 })
+
+// ── Test case screenshot ──────────────────────────────────────────────────────
+const screenshotSchema = z.object({
+  serviceName: z.string().min(1),
+  testPackId: z.string().min(1),
+  testCaseTitle: z.string().min(1),
+  contentHash: z.string().regex(/^[0-9a-f]{64}$/, 'contentHash must be a sha256 hex string'),
+  fileName: z.string().min(1),
+})
+
+// The asset id is derived from the content hash, so an unchanged screenshot
+// already referenced by the test case needs no upload at all.
+testRoutes.post(
+  '/service/test-case/screenshot/prepare',
+  zValidator('json', screenshotSchema),
+  async (c) => {
+    const body = c.req.valid('json')
+    const api = c.get('api')
+    const serviceId = await resolveService(api, body.serviceName)
+    const assetId = `file_${body.contentHash}`
+
+    const existing = (await api.listTestCases(serviceId, body.testPackId)).find(
+      (existingCase) => existingCase.title === body.testCaseTitle
+    )
+    if (existing && (existing.screenshotUrls ?? []).includes(assetId)) {
+      return c.json({ action: 'skip', assetId })
+    }
+
+    const upload = await api.createAssetUpload(body.contentHash)
+    return c.json({ action: 'upload', assetId: upload.assetId, uploadUrl: upload.uploadUrl })
+  }
+)
