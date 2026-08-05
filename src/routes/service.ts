@@ -365,3 +365,59 @@ serviceRoutes.post(
     return c.json({ sourceRef: body.sourceRef, id: result.id, created: result.created })
   }
 )
+
+const costTagsSchema = z.object({
+  serviceName: z.string().min(1),
+  tags: z
+    .array(
+      z.object({
+        key: z.string().min(1),
+        value: z.string().min(1),
+      })
+    )
+    .refine(
+      (tags) => new Set(tags.map((t) => `${t.key}=${t.value}`)).size === tags.length,
+      { message: 'cost tags must be unique' }
+    ),
+})
+
+// Declarative: the config is the whole truth for this service. Rules present
+// in the payload are created if missing, and any rule the backend has that
+// isn't in the payload is deleted. The CLI only calls this when the config
+// actually declares a costTags block, so a repo that doesn't manage its tags
+// here never reaches this handler and keeps whatever the UI set.
+serviceRoutes.post(
+  '/service/cost-tags',
+  zValidator('json', costTagsSchema),
+  async (c) => {
+    const body = c.req.valid('json')
+    const api = c.get('api')
+    const serviceId = await api.findServiceByName(body.serviceName)
+    if (!serviceId) {
+      throw new ApiError(
+        404,
+        `service "${body.serviceName}" not found — sync the service first`
+      )
+    }
+
+    const existing = await api.listCostTagRules(serviceId)
+    const wanted = new Set(body.tags.map((t) => `${t.key}=${t.value}`))
+    const held = new Set(existing.map((r) => `${r.tagKey}=${r.tagValue}`))
+
+    let created = 0
+    for (const tag of body.tags) {
+      if (held.has(`${tag.key}=${tag.value}`)) continue
+      await api.createCostTagRule(serviceId, { tagKey: tag.key, tagValue: tag.value })
+      created++
+    }
+
+    let deleted = 0
+    for (const rule of existing) {
+      if (wanted.has(`${rule.tagKey}=${rule.tagValue}`)) continue
+      await api.deleteCostTagRule(serviceId, rule.id)
+      deleted++
+    }
+
+    return c.json({ created, deleted, unchanged: body.tags.length - created })
+  }
+)

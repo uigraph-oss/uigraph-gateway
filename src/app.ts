@@ -12,6 +12,7 @@ import { mlRoutes } from './routes/ml'
 import { proxyRoutes } from './routes/proxy'
 import { serviceRoutes } from './routes/service'
 import { testRoutes } from './routes/tests'
+import { timelineRoutes } from './routes/timeline'
 
 export type AppEnv = { Variables: GatewayVars }
 
@@ -36,6 +37,7 @@ export function createApp() {
   sync.route('/', docsRoutes)
   sync.route('/', mapRoutes)
   sync.route('/', mlRoutes)
+  sync.route('/', timelineRoutes)
 
   app.route('/v1/sync', sync)
 

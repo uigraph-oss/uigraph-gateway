@@ -289,9 +289,9 @@ export class UigraphApi {
   async listTestCases(
     serviceId: string,
     testPackId: string
-  ): Promise<Array<{ testCaseId: string; title: string }>> {
+  ): Promise<Array<{ testCaseId: string; title: string; screenshotUrls?: string[] }>> {
     const res = await this.request<{
-      testCases?: Array<{ testCaseId: string; title: string }>
+      testCases?: Array<{ testCaseId: string; title: string; screenshotUrls?: string[] }>
     }>(
       'GET',
       await this.orgPath(`/services/${serviceId}/test-cases?testPackId=${testPackId}`)
@@ -311,6 +311,57 @@ export class UigraphApi {
     return this.request(
       'POST',
       await this.orgPath(`/services/${serviceId}/test-case/${testCaseId}`),
+      body
+    )
+  }
+
+  // Passing contentHash makes the asset id deterministic (file_<hash>), so
+  // re-uploading identical bytes overwrites the same object instead of
+  // orphaning the previous one.
+  async createAssetUpload(
+    contentHash?: string
+  ): Promise<{ assetId: string; uploadUrl: string }> {
+    return this.request(
+      'POST',
+      await this.orgPath('/assets'),
+      contentHash !== undefined ? { contentHash } : {}
+    )
+  }
+
+  async listCostTagRules(
+    serviceId: string
+  ): Promise<Array<{ id: string; tagKey: string; tagValue: string }>> {
+    const res = await this.request<{
+      tagRules?: Array<{ id: string; tagKey: string; tagValue: string }>
+    }>('GET', await this.orgPath(`/services/${serviceId}/costs/tag-rules`))
+    return res.tagRules ?? []
+  }
+
+  async createCostTagRule(
+    serviceId: string,
+    body: { tagKey: string; tagValue: string }
+  ): Promise<{ id: string }> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/costs/tag-rules`),
+      body
+    )
+  }
+
+  async deleteCostTagRule(serviceId: string, ruleId: string): Promise<unknown> {
+    return this.request(
+      'DELETE',
+      await this.orgPath(`/services/${serviceId}/costs/tag-rules/${ruleId}`)
+    )
+  }
+
+  async syncTimelineEvent(
+    serviceId: string,
+    body: Json
+  ): Promise<{ created: boolean; event: { id: string; title: string } }> {
+    return this.request(
+      'POST',
+      await this.orgPath(`/services/${serviceId}/timeline/sync`),
       body
     )
   }
