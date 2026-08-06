@@ -63,7 +63,7 @@ chatRoutes.post('/chat', zValidator('json', chatSchema), async (c) => {
   if (messages.length === 1 && messages[0].role === 'user') {
     const titleModel = resolveAiModel({
       npm: config.AI_PROVIDER_NPM,
-      model: config.AI_PROVIDER_TITLE_MODEL ?? config.AI_PROVIDER_MODEL,
+      model: config.AI_PROVIDER_TITLE_MODEL || config.AI_PROVIDER_MODEL,
       apiKey: config.AI_PROVIDER_API_KEY,
       apiUrl: config.AI_PROVIDER_API_URL,
       options: config.AI_PROVIDER_OPTIONS,
