@@ -10,8 +10,8 @@ const envSchema = z.object({
   STORAGE_ENDPOINT: z.string().url(),
   STORAGE_PUBLIC_ENDPOINT: z.string().url().optional().or(z.literal('')),
   STORAGE_BUCKET: z.string().min(1),
-  STORAGE_ACCESS_KEY: z.string().min(1),
-  STORAGE_SECRET_KEY: z.string().min(1),
+  STORAGE_ACCESS_KEY: z.string().optional(),
+  STORAGE_SECRET_KEY: z.string().optional(),
   STORAGE_REGION: z.string().default('us-east-1'),
   STORAGE_FORCE_PATH_STYLE: z
     .string()
