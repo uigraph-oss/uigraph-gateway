@@ -2,7 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE)
 
-HTTP gateway for [UiGraph](https://github.com/uigraph-oss) CLI and integration sync workflows. Built with [Hono](https://hono.dev/) and TypeScript, it exposes authenticated `/v1/sync` endpoints that bridge the UiGraph CLI to [uigraph-api](https://github.com/uigraph-oss/uigraph-api) and object storage.
+HTTP gateway for [UIGraph](https://github.com/uigraph-oss) CLI and integration sync workflows. Built with [Hono](https://hono.dev/) and TypeScript, it exposes authenticated `/v1/sync` endpoints that bridge the UiGraph CLI to [uigraph-api](https://github.com/uigraph-oss/uigraph-api) and object storage.
 
 ## Features
 
