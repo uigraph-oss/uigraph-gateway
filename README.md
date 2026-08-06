@@ -2,7 +2,7 @@
 
 [![license](https://img.shields.io/badge/license-BUSL--1.1-blue)](LICENSE)
 
-HTTP gateway for [UIGraph](https://github.com/uigraph-oss) CLI and integration sync workflows. Built with [Hono](https://hono.dev/) and TypeScript, it exposes authenticated `/v1/sync` endpoints that bridge the UiGraph CLI to [uigraph-api](https://github.com/uigraph-oss/uigraph-api) and object storage.
+HTTP gateway for [UIGraph](https://github.com/uigraph-oss) CLI and integration sync workflows. Built with [Hono](https://hono.dev/) and TypeScript, it exposes authenticated `/v1/sync` endpoints that bridge the UIGraph CLI to [uigraph-api](https://github.com/uigraph-oss/uigraph-api) and object storage.
 
 ## Features
 
@@ -59,7 +59,7 @@ This project is licensed under the [Business Source License 1.1](LICENSE) (BUSL-
 
 - **Source available today** — you can read, modify, and redistribute the code under the terms of the license.
 - **Non-production use** — free for development, testing, evaluation, and internal proof-of-concept.
-- **Production use** — requires a commercial license from UiGraph. Production use means any use that supports the ongoing operation of your business or organization.
+- **Production use** — requires a commercial license from UIGraph. Production use means any use that supports the ongoing operation of your business or organization.
 - **Future open source** — each version automatically converts to [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0) four years after it is first published under BUSL.
 
 BUSL is not an OSI-approved open source license during the initial term. For commercial licensing questions, open an issue or contact the maintainers.
